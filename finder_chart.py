@@ -1,3 +1,5 @@
+##This is based on the finder_chart code by Nadia Blagorodnova
+##Modified by Kaew Tinyanont
 from __future__ import print_function
 
 try:
@@ -12,6 +14,7 @@ except ImportError:
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Affine2D
 import pylab 
 from matplotlib.ticker import MaxNLocator
 import argparse
@@ -124,6 +127,8 @@ def query_ps1_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
 
     mask = (catalog["nDetections"]>4) * (catalog["rMeanPSFMag"] > minmag) * (catalog["rMeanPSFMag"] < maxmag) *\
     (catalog["iMeanPSFMag"] - catalog["iMeanKronMag"] < 0.05) #This last one to select stars.
+    # (catalog["iMeanPSFMag"] - catalog["iMeanKronMag"] < 0.05) #This last one to select stars.
+
     
     #*(catalog["rMeanPSFMag"] > minmag) * (catalog["rMeanPSFMag"] < maxmag) 
     catalog = catalog[mask]
@@ -141,7 +146,7 @@ def get_fits_image(ra, dec, rad, debug=False):
     Connects to the PS1 or SkyMapper image service to retrieve the fits file to be used as a bse for the finder chart.
     '''
     #If dec> -30, we have Pan-STARRS
-    if dec > -30:
+    if dec > -35:
         # Construct URL to download Pan-STARRS image cutout, and save to tmp.fits
     
         # First find the index of images and retrieve the file of the image that we want to use.
@@ -281,10 +286,10 @@ def get_host_PA_and_sep(ra, dec, host_ra, host_dec):
 def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=True, \
                 return_starlist = False, \
                 host_ra = None, host_dec = None, \
-                telescope="P200", directory=".", \
+                telescope="Keck", directory=".", \
                 minmag=15, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = None,\
                 mag=np.nan, \
-                marker = 'circle'):
+                marker = 'circle', source_comments = None):
     '''
     Creates a PDF with the finder chart for the object with the specified name and coordinates.
     It queries the PS1 catalogue to obtain nearby offset stars and get an R-band image as background.
@@ -331,6 +336,8 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         The magnitude of our target.
     marker : text
         'circle', or 'cross' to mark the star. Target and host galaxy (if provided) are always cross.
+    source_comments : text
+        If not None, append this comment into the starlist file
     '''
         
     try:
@@ -339,7 +346,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     except:
         ra, dec = hour2deg(ra, dec) 
 
-    if dec < -30:
+    if dec < -35:
         catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
     else:
         catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
@@ -352,10 +359,10 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         if debug: print ("Looking for a bit fainter stars up to mag: %.2f"%(maxmag+0.25))
         catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
 
-    if (len(catalog)<3):
-        print ("Restarting with larger radius %.2f arcmin"%(rad*60+0.5))
-        get_finder(ra, dec, name, rad+0.5/60, directory=directory, minmag=minmag, maxmag=maxmag+0.5, mag=mag, starlist=starlist, telescope=telescope)
-        return
+    # if (len(catalog)<3):
+    #     print ("Restarting with larger radius %.2f arcmin"%(rad*60+0.5))
+    #     get_finder(ra, dec, name, rad+0.5/60, directory=directory, minmag=minmag, maxmag=maxmag+0.5, mag=mag, starlist=starlist, telescope=telescope)
+    #     return
         
     if (not catalog is None and len(catalog)>0):
         np.random.shuffle(catalog)
@@ -377,11 +384,14 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     if len(catalog) <= num_offset_stars:
         print("Only %d offset star(s) available"%len(catalog))
         num_offset_stars = len(catalog)
+        # print('get to here')
 
-    catalog.sort(order='mag')
 
-    
+    if len(catalog) >1:
+        catalog.sort(order='mag')
+
     if (debug): print (catalog)
+    print(catalog)
 
     ###########Get FITS image of the FoV from DSS
     image_file = get_fits_image(ra, dec, rad, debug=debug)    
@@ -404,6 +414,15 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
 
     ###Get pixel coordinates of offset stars
     ###Now support any provided number of offset stars
+    # if (len(catalog)>0):
+    #     #w = astropy.wcs.find_all_wcs(ps1_image[0].header, relax=True, keysel=None)[0]
+    #     ref1_pix = wcs.wcs_world2pix(np.array([[catalog["ra"][0], catalog["dec"][0]]], np.float_), 1)
+    # if (len(catalog)>1):
+    #     ref2_pix = wcs.wcs_world2pix(np.array([[catalog["ra"][1], catalog["dec"][1]]], np.float_), 1)
+    #     #ref3_pix = wcs.wcs_world2pix(np.array([[catalog["ra"][2], catalog["dec"][2]]], np.float_), 1)
+
+    ###Get pixel coordinates of offset stars
+    ###Now support any provided number of offset stars
     ref_pix = []
     for i in range(num_offset_stars):
         ref_pix += [wcs.wcs_world2pix(np.array([[catalog["ra"][i], catalog["dec"][i]]], np.float_), 1)]
@@ -412,36 +431,41 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     target_pix = wcs.wcs_world2pix([(np.array([ra,dec], np.float_))], 1)
 
     ###Get pixel coordinates of the host (if not None)
+    # print(host_ra, host_dec)
     if (host_ra is not None) and (host_dec is not None):
         host_pix = wcs.wcs_world2pix([(np.array([host_ra,host_dec], np.float_))], 1)   
-    
+
     # Plot finder chart
-    
+
     #Adjust some of the counts to make easier the plotting.
     image[0].data[image[0].data>30000] = 30000
     image[0].data[np.isnan(image[0].data)] = 0
-    
-    plt.figure(figsize=(8,6))
-    # fig, ax = plt.subplots(1,1,figsize = (8.6))
+
+    # plt.figure(figsize=(8,6))
+    fig, ax = plt.subplots(1,1,figsize = (8,6), subplot_kw={'projection':wcs})
+    # ax.set_projection()
     plt.set_cmap('gray_r')
     smoothedimage = gaussian_filter(image[0].data, 1.3)
-    plt.imshow(smoothedimage, origin='lower',vmin=np.percentile(image[0].data.flatten(), 10), \
-    vmax=np.percentile(image[0].data.flatten(), 99.0))
-    
+    ax.imshow(smoothedimage, origin='lower',vmin=np.percentile(image[0].data.flatten(), 10), \
+                vmax=np.percentile(image[0].data.flatten(), 99.0))
+
     # Mark target
     plt.plot([target_pix[0,0]+35,(target_pix[0,0]+10)],[target_pix[0,1],(target_pix[0,1])], 'g-', lw=2)
     plt.plot([target_pix[0,0],(target_pix[0,0])],[target_pix[0,1]+10,(target_pix[0,1])+35], 'g-', lw=2)
     plt.annotate(name, xy=(target_pix[0,0], target_pix[0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points')
 
     # Mark host, if applicable
+    # print(host_ra, host_dec)
     if (host_ra is not None) and (host_dec is not None):
         #Get pa and sep
         host_pa, host_sep = get_host_PA_and_sep(ra,dec, host_ra,host_dec)
-        # print(host_pa, host_sep )
-        plt.plot([host_pix[0,0]+35,(host_pix[0,0]+10)],[host_pix[0,1],(host_pix[0,1])], 'c-', lw=2)
-        plt.plot([host_pix[0,0],(host_pix[0,0])],[host_pix[0,1]+10,(host_pix[0,1])+35], 'c-', lw=2)
-        plt.annotate('Host', xy=(host_pix[0,0], host_pix[0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points')        
+        if debug:
+            print(host_pa, host_sep )
+        plt.plot([host_pix[0,0]-35,(host_pix[0,0]-10)],[host_pix[0,1],(host_pix[0,1])], 'c-', lw=1)
+        plt.plot([host_pix[0,0],(host_pix[0,0])],[host_pix[0,1]-10,(host_pix[0,1])-35], 'c-', lw=1)
+        plt.annotate('Host', xy=(host_pix[0,0], host_pix[0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points', color = 'c')        
     
+
     # Mark and label reference stars
     # if (len(catalog)>0):
     #     plt.plot([ref1_pix[0,0]+15,(ref1_pix[0,0]+10)],[ref1_pix[0,1],(ref1_pix[0,1])], 'b-', lw=2)
@@ -451,7 +475,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     #     plt.plot([ref2_pix[0,0]+15,(ref2_pix[0,0]+10)],[ref2_pix[0,1],(ref2_pix[0,1])], 'r-', lw=2)
     #     plt.plot([ref2_pix[0,0],(ref2_pix[0,0])],[ref2_pix[0,1]+10,(ref2_pix[0,1])+15], 'r-', lw=2)
     #     plt.annotate("R2", xy=(ref2_pix[0,0], ref2_pix[0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points', color="r")
-    cols = ["b","r","c","m", "brown", "k", "orange"]
+    cols = ["b","r","orange","m", "brown", "k", "c"]
     if num_offset_stars > 7:
         print("Why do you need so many offset stars!?")
     for i in range(num_offset_stars):
@@ -464,39 +488,39 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
             ax = plt.gca()
             ax.add_artist(circ)
         plt.annotate("S%d"%(i+1), xy=(ref_pix[i][0,0], ref_pix[i][0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points', color=cols[i])
-        
+
     # Set limits to size of DSS image
-    pylab.xlim([0,(image[0].data.shape[0])])
-    pylab.ylim([0,(image[0].data.shape[1])])
-    
+    ax.set_xlim([0,(image[0].data.shape[0])])
+    ax.set_ylim([0,(image[0].data.shape[1])])
+
     # Plot compass
     plt.plot([(image[0].data.shape[0])-10,(image[0].data.shape[0]-40)],[10,10], 'k-', lw=2)
     plt.plot([(image[0].data.shape[0])-10,(image[0].data.shape[0])-10],[10,40], 'k-', lw=2)
     plt.annotate("N", xy=((image[0].data.shape[0])-20, 40),  xycoords='data',xytext=(-4,5), textcoords='offset points')
     plt.annotate("E", xy=((image[0].data.shape[0])-40, 20),  xycoords='data',xytext=(-12,-5), textcoords='offset points')
-    
+
     # Set axis tics (not implemented correctly yet)
-    plt.tick_params(labelbottom='off')
-    plt.tick_params(labelleft='off')
-    plt.axes().xaxis.set_major_locator(MaxNLocator(5))
-    plt.axes().yaxis.set_major_locator(MaxNLocator(5))
-    plt.axes().set_xlabel('%.1f\''%(rad*60))
-    plt.axes().set_ylabel('%.1f\''%(rad*60))
-    
+    # plt.tick_params(labelbottom='off')
+    # plt.tick_params(labelleft='off')
+    ax.xaxis.set_major_locator(MaxNLocator(5))
+    ax.yaxis.set_major_locator(MaxNLocator(5))
+    ax.set_xlabel('%.1f\''%(rad*60))
+    ax.set_ylabel('%.1f\''%(rad*60))
+
     # Set size of window (leaving space to right for ref star coords)
     plt.subplots_adjust(right=0.65,left=0.05, top=0.99, bottom=0.05)
-    
+
     # List name, coords, mag of references etc
-    plt.text(1.02, 0.85, name, transform=plt.axes().transAxes, fontweight='bold')
+    plt.text(1.02, 0.85, name, transform=ax.transAxes, fontweight='bold')
     #plt.text(1.02, 0.80, "mag=%.1f"%mag, transform=plt.axes().transAxes, fontweight='bold')
-    plt.text(1.02, 0.80, "%.5f %.5f"%(ra, dec),transform=plt.axes().transAxes)
+    plt.text(1.02, 0.80, "%.5f %.5f"%(ra, dec),transform=ax.transAxes)
     rah, dech = deg2hour(ra, dec)
-    plt.text(1.02, 0.75,rah+"  "+dech, transform=plt.axes().transAxes)
+    plt.text(1.02, 0.75,rah+"  "+dech, transform=ax.transAxes)
     #If host info is provided
     if (host_ra is not None) and (host_dec is not None):
-        plt.text(1.02, 0.7, "Host PA = %.2f deg, Sep = %.2f\""%(host_pa, host_sep), transform=plt.axes().transAxes)
+        plt.text(1.02, 0.7, "Host PA = %.2f deg, Sep = %.2f\""%(host_pa, host_sep), transform=ax.transAxes)
 
-    
+
     #Put the text for the offset stars.
     # if (len(catalog)>0):
     #     ofR1 = get_offset(catalog["ra"][0], catalog["dec"][0], ra, dec)
@@ -517,13 +541,16 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
         S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=":")
 
-        plt.text(1.02, 0.60-0.2*i,"S%d, mag=%.2f"%(i+1,catalog["mag"][i]), transform=plt.axes().transAxes, color=cols[i])
-        plt.text(1.02, 0.55-0.2*i,'%s %s'%(S[0], S[1]), transform=plt.axes().transAxes, color=cols[i])
-        plt.text(1.02, 0.5 -0.2*i,"E: %.2f N: %.2f"%(ofR[0], ofR[1]),transform=plt.axes().transAxes, color=cols[i]) 
+        plt.text(1.02, 0.60-0.2*i,"S%d, mag=%.2f"%(i+1,catalog["mag"][i]), transform=ax.transAxes, color=cols[i])
+        plt.text(1.02, 0.55-0.2*i,'%s %s'%(S[0], S[1]), transform=ax.transAxes, color=cols[i])
+        plt.text(1.02, 0.5 -0.2*i,"E: %.2f N: %.2f"%(ofR[0], ofR[1]),transform=ax.transAxes, color=cols[i]) 
+
+
+
     
 
     # Save to pdf
-    pylab.savefig(os.path.join(directory, str(name+'_finder.pdf')))
+    pylab.savefig(os.path.join(directory, str(name+'_finder.pdf')), bbox_inches = 'tight')
     if debug: print ("Saved to %s"%os.path.join(directory, str(name+'_finder.pdf')))
     pylab.close("all")
     
@@ -544,41 +571,67 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     #     S2 = deg2hour(catalog["ra"][1], catalog["dec"][1], sep=" ")
     #     print ( "{:s} {:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} r={:.1f} {:s} ".format( (name+"_S2").ljust(20), S2[0], S2[1], separator, ofR2[0], ofR2[1], catalog["mag"][1], commentchar))
     ######Print offset stars to a starlist file
-    if print_starlist or not starlist is None:
-        #Target
-        print ( "{0} {2} {3}  2000.0 {1} ".format(name.ljust(20), commentchar, *deg2hour(ra, dec, sep=" ") ) )
-        #offset stars
-        for i in range(num_offset_stars):
-            S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
-            ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
-            print ( "{:s} {:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} r={:.1f} {:s} ".format( (name+"_S%d"%(i+1)).ljust(20), S[0], S[1], separator, ofR[0], ofR[1], catalog["mag"][i], commentchar))
-    if return_starlist == True:
-        starlist_str = "{0} {2} {3}  2000.0 {1} \n".format(name.ljust(20), commentchar, *deg2hour(ra, dec, sep=" ") )
-        for i in range(num_offset_stars):
-            S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
-            ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
-            starlist_str += "{:s} {:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} r={:.1f} {:s} \n".format( (name+"_S%d"%(i+1)).ljust(20), S[0], S[1], separator, ofR[0], ofR[1], catalog["mag"][i], commentchar)
-       
-
     #If no magnitude was supplied, just do not put it on the chart.
     if not np.isnan(mag):
         rmag = "r=%.2f"%mag
     else:
         rmag = ""
-     
+
+    if print_starlist or not starlist is None:
+        #Target if no host
+        if (host_ra is None) and (host_dec is None):
+            print ( "{:s}{:s} {:s}  2000.0  {:s} {:s}".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag ) )
+        else:
+            print ( "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag ) )
+        #offset stars
+        for i in range(num_offset_stars):
+            S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
+            ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
+            if (host_ra is None) and (host_dec is None):
+                print ( "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} ".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i]))
+            else:
+                print ( "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} ".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i]))
+    if return_starlist == True:
+        if (host_ra is None) and (host_dec is None):
+            starlist_str = "{:s}{:s} {:s}  2000.0  {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag )
+        else:
+            starlist_str = "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
+        for i in range(num_offset_stars):
+            S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
+            ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
+            if (host_ra is None) and (host_dec is None):
+                starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i])
+            else:
+                starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
+
+    # print('get to after marking offset stars')
+    print(starlist_str)
+ 
     #Write to the starlist if the name of the starlist was provided.
     if (not starlist is None) and (telescope =="Keck"):
         with open(starlist, "a") as f:
-            f.write( "{0} {1} {2}  2000.0 #".format(name.ljust(17), *deg2hour(ra, dec, sep=" ")) + "%s \n"%rmag ) 
-            # if (len(catalog)>0):
-            #     f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S1").ljust(17), S1[0], S1[1], ofR1[0], ofR1[1], catalog["mag"][0]))
-            # if (len(catalog)>1):
-            #     f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S2").ljust(17), S2[0], S2[1], ofR2[0], ofR2[1], catalog["mag"][1]))
+            # f.write( "{0} {1} {2}  2000.0 #".format(name.ljust(16), *deg2hour(ra, dec, sep=" ")) + "%s \n"%rmag ) 
+            # # if (len(catalog)>0):
+            # #     f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S1").ljust(17), S1[0], S1[1], ofR1[0], ofR1[1], catalog["mag"][0]))
+            # # if (len(catalog)>1):
+            # #     f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S2").ljust(17), S2[0], S2[1], ofR2[0], ofR2[1], catalog["mag"][1]))
+            # for i in range(num_offset_stars):
+            #     S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
+            #     ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
+            #     f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], ofR[0], ofR[1], catalog["mag"][i]))
+            # f.write('\n')
+            if (host_ra is None) and (host_dec is None):
+                starlist_str2 = "{:s}{:s} {:s}  2000.0  {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag )
+            else:
+                starlist_str2 = "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
             for i in range(num_offset_stars):
                 S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
                 ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
-                f.write ( "{:s} {:s} {:s}  2000.0 raoffset={:.2f} decoffset={:.2f} r={:.1f} # \n".format( (name+"_S%d"%(i+1)).ljust(17), S[0], S[1], ofR[0], ofR[1], catalog["mag"][i]))
-            f.write('\n')
+                if (host_ra is None) and (host_dec is None):
+                    starlist_str2 += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i])
+                else:
+                    starlist_str2 += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
+            f.write(starlist_str2)
 
     if (not starlist is None) and (telescope =="P200"):
         with open(starlist, "a") as f:
@@ -605,14 +658,14 @@ if __name__ == '__main__':
         '''
         Creates the finder chart for the given RA, DEC and NAME.
         
-        Usage: finder.py <RA> <Dec> <Name> <rad [deg]> <telescope [P200|Keck]>
+        Usage: finder_chart.py <RA> <Dec> <Name> <rad [deg]> <telescope [P200|Keck]>
             
         ''', formatter_class=argparse.RawTextHelpFormatter)
         
         
     #Check if correct number of arguments are given
     if len(sys.argv) < 4:
-    	print ("Usage: finder.py <RA> <Dec> <Name>  <rad [deg]> <telescope [P200|Keck]>")
+    	print ("Usage: finder_chart.py <RA> <Dec> <Name>  <rad [deg]> <telescope [P200|Keck]>")
     	sys.exit()
      
     ra=sys.argv[1]
