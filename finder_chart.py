@@ -289,7 +289,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
                 telescope="Keck", directory=".", \
                 minmag=15, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = None,\
                 mag=np.nan, \
-                marker = 'circle', source_comments = None):
+                marker = 'circle', source_comments = None, output_format = 'pdf'):
     '''
     Creates a PDF with the finder chart for the object with the specified name and coordinates.
     It queries the PS1 catalogue to obtain nearby offset stars and get an R-band image as background.
@@ -338,6 +338,8 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         'circle', or 'cross' to mark the star. Target and host galaxy (if provided) are always cross.
     source_comments : text
         If not None, append this comment into the starlist file
+    output_format : text
+        pdf or png. Only png is supported for rotation right now
     '''
         
     try:
@@ -391,7 +393,6 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         catalog.sort(order='mag')
 
     if (debug): print (catalog)
-    print(catalog)
 
     ###########Get FITS image of the FoV from DSS
     image_file = get_fits_image(ra, dec, rad, debug=debug)    
@@ -549,9 +550,16 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
 
     
 
-    # Save to pdf
-    pylab.savefig(os.path.join(directory, str(name+'_finder.pdf')), bbox_inches = 'tight')
-    if debug: print ("Saved to %s"%os.path.join(directory, str(name+'_finder.pdf')))
+    # # Save to pdf
+    if output_format == 'pdf':
+        pylab.savefig(os.path.join(directory, str(name+'_finder.pdf')), bbox_inches = 'tight')
+        if debug: print ("Saved to %s"%os.path.join(directory, str(name+'_finder.pdf')))
+    # pylab.close("all")
+    # Save to png
+    if output_format == 'png':
+        pylab.savefig(os.path.join(directory, str(name+'_finder.png')), bbox_inches = 'tight', dpi = 150)
+        if debug: print ("Saved to %s"%os.path.join(directory, str(name+'_finder.png')))
+
     pylab.close("all")
     
     #Print starlist
@@ -577,7 +585,8 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     else:
         rmag = ""
 
-    if print_starlist or not starlist is None:
+    # if print_starlist or not starlist is None:
+    if print_starlist:
         #Target if no host
         if (host_ra is None) and (host_dec is None):
             print ( "{:s}{:s} {:s}  2000.0  {:s} {:s}".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag ) )
@@ -605,7 +614,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
                 starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
 
     # print('get to after marking offset stars')
-    print(starlist_str)
+    # print(starlist_str)
  
     #Write to the starlist if the name of the starlist was provided.
     if (not starlist is None) and (telescope =="Keck"):

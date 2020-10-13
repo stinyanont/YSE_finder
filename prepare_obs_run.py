@@ -11,8 +11,9 @@ import astropy.units as u
 from astropy import coordinates
 import sys, argparse
 import numpy as np
+import os
 
-from finder_chart import get_finder
+from finder_chart import get_finder, get_host_PA_and_sep
 
 
 
@@ -27,12 +28,22 @@ if __name__ == '__main__':
             
         ''', formatter_class=argparse.RawTextHelpFormatter)
 
-    #Check if correct number of arguments are given
-    if len(sys.argv) != 2:
-    	print ("Usage: prepare_obs_run.py target_list_filename")
-    	sys.exit()
+    # parser = argparse.ArgumentParser()
+    parser.add_argument("filename", type=str,
+                        help="filename of the target list")
 
-    filename = sys.argv[1]
+    parser.add_argument("-r", "--rotate", action="store_true",
+                        help="produce rotated finder chart")
+
+    args = parser.parse_args()
+
+    #Check if correct number of arguments are given
+    # if len(sys.argv) != 2:
+    # 	print ("Usage: prepare_obs_run.py target_list_filename")
+    # 	sys.exit()
+
+    # filename = sys.argv[1]
+    filename = args.filename
 
     targets = asci.read(filename, comment = '!', format = 'no_header')
 
@@ -73,15 +84,30 @@ if __name__ == '__main__':
                 host_dec = None
             
             # print(host_ra, host_dec)
-            finder_size = 5/60 #5 arcmin, LRIS
+            finder_size = 3/60 #3 arcmin, LRIS
             max_separation = 2*60 #2 arcmin, LRIS
 
+            #Obtain PA and separation from target ra/dec and host ra/dec
+            #To do: make it not duplicate for the "get_finder" function. 
+            if (host_ra is not None) and (host_dec is not None):
+                host_pa, host_sep = get_host_PA_and_sep(ra_deg, dec_deg, host_ra, host_dec)
+                pa_offset = 30 #30 degree offset in slit viewing camera PA
+
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
-                            minmag=15, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = max_separation,\
+                            minmag=14, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = max_separation,\
                             host_ra = host_ra, host_dec = host_dec, \
-                            starlist=None, print_starlist = False,  return_starlist = True, debug = False)
+                            starlist=None, print_starlist = False,  return_starlist = True, debug = False, output_format='png')
             print(starlist_entry)
             all_starlist += starlist_entry
+            ###If requesting rotated finder chart
+            if args.rotate and ((host_ra is not None) and (host_dec is not None)):
+                print("Make rotated finder chart using PA + 30 deg for LRIS.")
+                try:
+                    finder_name = name+'_finder.png'
+                    rotated_finder = name+'_finder_rot.png'
+                    os.system('convert %s -virtual-pixel white +distort SRT %.2f %s'%(finder_name, host_pa+pa_offset, rotated_finder))
+                except:
+                    print("Check if imagemagick is installed.")
         elif skip_host == True: #In this case, the next item should be a target
             skip_host = False 
     print(all_starlist)
