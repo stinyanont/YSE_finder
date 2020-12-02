@@ -100,7 +100,7 @@ def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
     
     return newcat
     
-def query_ps1_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
+def query_ps1_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5, debug = False):
     '''
     Sends a VO query to the PS1 catalogue.
     Filters the result by mangitude (between 15 and 18.5)
@@ -127,6 +127,7 @@ def query_ps1_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
 
     mask = (catalog["nDetections"]>4) * (catalog["rMeanPSFMag"] > minmag) * (catalog["rMeanPSFMag"] < maxmag) *\
     (catalog["iMeanPSFMag"] - catalog["iMeanKronMag"] < 0.05) #This last one to select stars.
+    if debug: print(catalog["iMeanPSFMag"] - catalog["iMeanKronMag"])
     # (catalog["iMeanPSFMag"] - catalog["iMeanKronMag"] < 0.05) #This last one to select stars.
 
     
@@ -224,7 +225,7 @@ def get_cutout(ra, dec, name, rad, debug=True):
     except:
         ra, dec = hour2deg(ra, dec) 
         
-    catalog = query_ps1_catalogue(ra, dec, rad)
+    catalog = query_ps1_catalogue(ra, dec, rad, debug = debug)
     
     if (debug):
         print (catalog)
@@ -287,9 +288,9 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
                 return_starlist = False, \
                 host_ra = None, host_dec = None, \
                 telescope="Keck", directory=".", \
-                minmag=15, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = None,\
+                minmag=13, maxmag=19.5, num_offset_stars = 3, min_separation = 1, max_separation = None,\
                 mag=np.nan, \
-                marker = 'circle', source_comments = None, output_format = 'pdf'):
+                marker = 'circle', source_comments = None, output_format = 'png'):
     '''
     Creates a PDF with the finder chart for the object with the specified name and coordinates.
     It queries the PS1 catalogue to obtain nearby offset stars and get an R-band image as background.
@@ -351,14 +352,15 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     if dec < -35:
         catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
     else:
-        catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
+        catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
     
     if (debug):
+        print("Catalog returned by the function.")
         print (catalog)
 
     
     if (len(catalog)<3):
-        if debug: print ("Looking for a bit fainter stars up to mag: %.2f"%(maxmag+0.25))
+        if debug: print ("Looking for a bit fainter stars up to mag: %.2f"%(maxmag+0.5))
         catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
 
     # if (len(catalog)<3):
@@ -370,15 +372,32 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         np.random.shuffle(catalog)
 
     ###########Reject stars that are too close
-    no_self_object = (np.abs(catalog["ra"]-ra)*np.cos(np.deg2rad(dec))>min_separation/3600)*(np.abs(catalog["dec"]-dec)>min_separation/3600)
+    # no_self_object = (np.abs(catalog["ra"]-ra)*np.cos(np.deg2rad(dec))>min_separation/3600)*(np.abs(catalog["dec"]-dec)>min_separation/3600)
+    offsets_stars = SkyCoord(catalog["ra"], catalog["dec"], unit = (u.deg, u.deg)) 
+
+    #Define SkyCoord object for target and host
+    transient_coord = SkyCoord(ra, dec, frame='icrs', unit='deg')
+
+    offsets = transient_coord.separation(offsets_stars)
+
+    no_self_object = offsets.arcsec > min_separation
+
     catalog = catalog[no_self_object]
+    if (debug):
+        print('After removing stars too close.')
+        print (catalog)
     ###########Reject stars that are too far
     if max_separation is not None:
-        not_too_far = (np.abs(catalog["ra"]-ra)*np.cos(np.deg2rad(dec))<max_separation/3600)*(np.abs(catalog["dec"]-dec)<max_separation/3600)
+        # not_too_far = (np.abs(catalog["ra"]-ra)*np.cos(np.deg2rad(dec))<max_separation/3600)*(np.abs(catalog["dec"]-dec)<max_separation/3600)
+        not_too_far = offsets.arcsec < max_separation
         if len(catalog[not_too_far]) <= num_offset_stars+1:
             print("Not enough stars, ignore maximum separation and use the whole FoV.")
         else:
             catalog = catalog[not_too_far]
+
+        if (debug):
+            print('After removing stars too far.')
+            print (catalog)
 
     ###########Print warning if too few stars, set the number of offset stars to length of catalog
     if num_offset_stars >= 4:
@@ -512,7 +531,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     plt.subplots_adjust(right=0.65,left=0.05, top=0.99, bottom=0.05)
 
     # List name, coords, mag of references etc
-    plt.text(1.02, 0.85, name, transform=ax.transAxes, fontweight='bold')
+    plt.text(1.02, 0.85, name+" mag=%.1f"%mag, transform=ax.transAxes, fontweight='bold')
     #plt.text(1.02, 0.80, "mag=%.1f"%mag, transform=plt.axes().transAxes, fontweight='bold')
     plt.text(1.02, 0.80, "%.5f %.5f"%(ra, dec),transform=ax.transAxes)
     rah, dech = deg2hour(ra, dec)
@@ -694,13 +713,13 @@ if __name__ == '__main__':
     if (len(sys.argv)>5):
         telescope = sys.argv[5]
     else:
-        telescope = "P200"
-        print ('Assuming that the telescope you observe will be P200. If it is "Keck", please specify otherwise.')
+        telescope = "Keck"
+        print ('Assuming that the telescope you observe will be Keck. If it is "P200", please specify otherwise.')
 
     if (len(sys.argv)>6):
         num_offset_stars = int(sys.argv[6])
     else:
-        num_offset_stars = 2
+        num_offset_stars = 3
 
     
-    get_finder(ra, dec, name, rad, telescope=telescope, debug=False, minmag=7, maxmag=17, num_offset_stars=num_offset_stars)
+    get_finder(ra, dec, name, rad, telescope=telescope, debug=False, minmag=13, maxmag=19.5, num_offset_stars=num_offset_stars)

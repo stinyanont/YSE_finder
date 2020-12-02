@@ -24,7 +24,7 @@ if __name__ == '__main__':
         '''
         Creates the finder charts for the whole night, provided a target list file.
         
-        Usage: prepare_obs_run.py target_list_filename
+        Usage: prepare_obs_run.py target_list_filename telescope
             
         ''', formatter_class=argparse.RawTextHelpFormatter)
 
@@ -32,8 +32,14 @@ if __name__ == '__main__':
     parser.add_argument("filename", type=str,
                         help="filename of the target list")
 
+    parser.add_argument("telescope", type = str,
+                        help="Keck or Lick")
+
     parser.add_argument("-r", "--rotate", action="store_true",
                         help="produce rotated finder chart")
+
+    parser.add_argument("-d", "--debug", action="store_true",
+                    help="debug mode")
 
     args = parser.parse_args()
 
@@ -44,8 +50,9 @@ if __name__ == '__main__':
 
     # filename = sys.argv[1]
     filename = args.filename
+    converters = {'col5': [asci.convert_numpy(np.str)]} #This is so that -00 gets preserved as -00
 
-    targets = asci.read(filename, comment = '!', format = 'no_header')
+    targets = asci.read(filename, comment = '!', format = 'no_header', converters = converters)
 
     names = np.array(targets['col1'])
 
@@ -67,7 +74,10 @@ if __name__ == '__main__':
             dec_deg = coords[i].dec.deg
             mag = mags[i]
             print("Preparing a finder chart for %s."%name)
-            #Check if host is provided
+            #Check if host is provided. This should be in the next line, with same name
+            # Example
+            # 2020pni        hh mm ss dd mm ss etc
+            # 2020pni_host   hh mm ss dd mm ss etc
             if i < len(targets)-1: #not the last item
                 next_entry = names[i+1]
                 if next_entry.split('_')[0] == name and next_entry.split('_')[1] == 'host':
@@ -84,8 +94,22 @@ if __name__ == '__main__':
                 host_dec = None
             
             # print(host_ra, host_dec)
-            finder_size = 3/60 #3 arcmin, LRIS
-            max_separation = 2*60 #2 arcmin, LRIS
+            if args.telescope == 'Keck':
+                finder_size = 3/60 #3 arcmin, LRIS
+                max_separation = 2*60 #2 arcmin, LRIS
+                min_mag = 13
+                max_mag = 19.9
+            elif args.telescope == 'Lick':
+                finder_size = 4/60 #4 arcmin, Kast
+                max_separation = 3*60 #3 arcmin, Kast 
+                min_mag = 5
+                max_mag = 18   
+            else:
+                print("Telescope should be eihter Keck or Lick; default to Lick.")  
+                finder_size = 4/60 #4 arcmin, Kast
+                max_separation = 3*60 #3 arcmin, Kast 
+                min_mag = 11
+                max_mag = 17            
 
             #Obtain PA and separation from target ra/dec and host ra/dec
             #To do: make it not duplicate for the "get_finder" function. 
@@ -94,9 +118,9 @@ if __name__ == '__main__':
                 pa_offset = 30 #30 degree offset in slit viewing camera PA
 
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
-                            minmag=14, maxmag=18.5, num_offset_stars = 3, min_separation = 2, max_separation = max_separation,\
+                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = 1, max_separation = None,\
                             host_ra = host_ra, host_dec = host_dec, \
-                            starlist=None, print_starlist = False,  return_starlist = True, debug = False, output_format='png')
+                            starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png')
             print(starlist_entry)
             all_starlist += starlist_entry
             ###If requesting rotated finder chart
