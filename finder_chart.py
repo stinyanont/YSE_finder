@@ -610,7 +610,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         if (host_ra is None) and (host_dec is None):
             print ( "{:s}{:s} {:s}  2000.0  {:s} {:s}".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag ) )
         else:
-            print ( "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag ) )
+            print ( "{:s}{:s} {:s}  2000.0  rotmode=pa rotdest={:.2f} {:s} {:s".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag ) )
         #offset stars
         for i in range(num_offset_stars):
             S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
@@ -618,19 +618,19 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
             if (host_ra is None) and (host_dec is None):
                 print ( "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} ".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i]))
             else:
-                print ( "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} ".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i]))
+                print ( "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotmode=pa rotdest={:.2f} {:s} r={:.1f} ".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i]))
     if return_starlist == True:
         if (host_ra is None) and (host_dec is None):
             starlist_str = "{:s}{:s} {:s}  2000.0  {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag )
         else:
-            starlist_str = "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
+            starlist_str = "{:s}{:s} {:s}  2000.0  rotmode=pa rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
         for i in range(num_offset_stars):
             S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
             ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
             if (host_ra is None) and (host_dec is None):
                 starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i])
             else:
-                starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
+                starlist_str += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotmode=pa rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
 
     # print('get to after marking offset stars')
     # print(starlist_str)
@@ -651,14 +651,14 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
             if (host_ra is None) and (host_dec is None):
                 starlist_str2 = "{:s}{:s} {:s}  2000.0  {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), commentchar, rmag )
             else:
-                starlist_str2 = "{:s}{:s} {:s}  2000.0  rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
+                starlist_str2 = "{:s}{:s} {:s}  2000.0  rotmode=pa rotdest={:.2f} {:s} {:s}\n".format(name.ljust(16), *deg2hour(ra, dec, sep=" "), host_pa, commentchar, rmag)
             for i in range(num_offset_stars):
                 S = deg2hour(catalog["ra"][i], catalog["dec"][i], sep=" ")
                 ofR = get_offset(catalog["ra"][i], catalog["dec"][i], ra, dec)
                 if (host_ra is None) and (host_dec is None):
                     starlist_str2 += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], commentchar, catalog["mag"][i])
                 else:
-                    starlist_str2 += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
+                    starlist_str2 += "{:s}{:s} {:s}  2000.0 {:s} raoffset={:.2f} decoffset={:.2f} rotmode=pa rotdest={:.2f} {:s} r={:.1f} \n".format( (name+"_S%d"%(i+1)).ljust(16), S[0], S[1], separator, ofR[0], ofR[1], host_pa, commentchar, catalog["mag"][i])
             f.write(starlist_str2)
 
     if (not starlist is None) and (telescope =="P200"):
