@@ -96,12 +96,12 @@ if __name__ == '__main__':
             # print(host_ra, host_dec)
             if args.telescope == 'Keck':
                 finder_size = 3/60 #3 arcmin, LRIS
-                max_separation = 2*60 #2 arcmin, LRIS
-                min_mag = 13
-                max_mag = 19.9
+                max_separation = 4*60 #2 arcmin, LRIS
+                min_mag = 11
+                max_mag = 21
             elif args.telescope == 'Lick':
-                finder_size = 4/60 #4 arcmin, Kast
-                max_separation = 3*60 #3 arcmin, Kast 
+                finder_size = 6/60 #4 arcmin, Kast
+                max_separation = 6*60 #3 arcmin, Kast 
                 min_mag = 5
                 max_mag = 18   
             else:
@@ -109,7 +109,10 @@ if __name__ == '__main__':
                 finder_size = 4/60 #4 arcmin, Kast
                 max_separation = 3*60 #3 arcmin, Kast 
                 min_mag = 11
-                max_mag = 17            
+                max_mag = 17  
+
+            #Minimum separation
+            minsep = 60    
 
             #Obtain PA and separation from target ra/dec and host ra/dec
             #To do: make it not duplicate for the "get_finder" function. 
@@ -118,7 +121,7 @@ if __name__ == '__main__':
                 pa_offset = 30 #30 degree offset in slit viewing camera PA
 
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
-                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = 1, max_separation = None,\
+                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = None,\
                             host_ra = host_ra, host_dec = host_dec, \
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png')
             print(starlist_entry)
