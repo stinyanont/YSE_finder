@@ -4,12 +4,13 @@ from astropy.coordinates import SkyCoord
 from astroquery.skyview import SkyView
 import astropy.units as u
 from astropy.wcs import WCS
+from astropy.io import ascii as asci
 
 from matplotlib.patches import Rectangle, Circle
 from matplotlib import transforms
 from matplotlib.widgets import Slider, Button
 
-import sys, glob
+import sys, glob, argparse
 
 
 #############Define the matplotlib slider tool
@@ -381,7 +382,6 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
 if __name__ == '__main__':
     #When running this script, take a target list already with ONE offset star per SN
     #For each object, 
-    target_list = sys.argv[1]
     #Read target and offset
 
     #Call plot_NIRES_fov(coords, coords_offset, target_name)
@@ -389,3 +389,40 @@ if __name__ == '__main__':
     #Update the rotdest line
 
     #Save the updated target list 
+
+    parser = argparse.ArgumentParser(description=\
+        '''
+        Creates the finder charts for the whole night, provided a target list file.
+        
+        Usage: prepare_obs_run.py target_list_filename telescope
+            
+        ''', formatter_class=argparse.RawTextHelpFormatter)
+
+    # parser = argparse.ArgumentParser()
+    parser.add_argument("filename", type=str,
+                        help="filename of the target list")
+
+    parser.add_argument("-d", "--debug", action="store_true",
+                    help="debug mode")
+
+    args = parser.parse_args()
+
+    #get file name
+    filename = args.filename
+    # converters = {'col5': [asci.convert_numpy(np.str)]} #This is so that -00 gets preserved as -00
+    # targets = asci.read(filename, comment = '!', format = 'no_header', converters = converters)
+    try:
+        targets = asci.read( filename, format="fixed_width_no_header",
+                    col_starts=(0, 16, 28, 42, 50),
+                    col_ends=(15, 27, 41, 49, 140),
+                    names = ('names', 'RA', 'Dec', 'epoch', 'comments'))
+    except:
+        print('Make sure your supplied target list is in the Keck fixed width format.')
+
+    names = np.array(targets['names'])
+    #Make SkyCoord
+    coords = SkyCoord(targets['RA'], targets['Dec'], unit = (u.hourangle, u.deg))
+
+    all_starlist = ''
+    skip_offset_star = False
+
