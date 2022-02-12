@@ -33,7 +33,7 @@ if __name__ == '__main__':
                         help="filename of the target list")
 
     parser.add_argument("telescope", type = str,
-                        help="Keck or Lick")
+                        help="Keck, Lick, DEIMOS, or NIRES. Keck means LRIS. Sorry.")
 
     parser.add_argument("-r", "--rotate", action="store_true",
                         help="produce rotated finder chart")
@@ -95,30 +95,45 @@ if __name__ == '__main__':
             
             # print(host_ra, host_dec)
             if args.telescope == 'Keck':
-                finder_size = 3/60 #3 arcmin, LRIS
-                max_separation = 4*60 #2 arcmin, LRIS
-                min_mag = 11
+                finder_size = 3/60 #3 arcmin, LRIS, this is in degree
+                max_separation = 5*60 #5 arcmin, LRIS, this is in arcsec. Don't ask why.
+                min_mag = 10
                 max_mag = 21
+                pa_offset = 30
             elif args.telescope == 'Lick':
+                finder_size = 6/60 #6 arcmin, Kast
+                max_separation = 6*60 #6 arcmin, Kast 
+                min_mag = 5
+                max_mag = 18  
+                pa_offset = 0
+            elif args.telescope == 'DEIMOS':
                 finder_size = 6/60 #4 arcmin, Kast
                 max_separation = 6*60 #3 arcmin, Kast 
                 min_mag = 5
-                max_mag = 18   
+                max_mag = 18  
+                pa_offset = 0
+            elif args.telescope == 'NIRES':
+                finder_size = 4/60 #4 arcmin, NIRES
+                max_separation = 1.8*60 #1.8 arcmin, NIRES, not guidable otherwise
+                min_mag = 5
+                max_mag = 18  
+                pa_offset = 0
             else:
                 print("Telescope should be eihter Keck or Lick; default to Lick.")  
-                finder_size = 4/60 #4 arcmin, Kast
-                max_separation = 3*60 #3 arcmin, Kast 
-                min_mag = 11
-                max_mag = 17  
+                finder_size = 6/60 #4 arcmin, Kast
+                max_separation = 6*60 #3 arcmin, Kast 
+                min_mag = 5
+                max_mag = 18  
 
             #Minimum separation
-            minsep = 60    
+            minsep = 1    #in arcsec
 
             #Obtain PA and separation from target ra/dec and host ra/dec
             #To do: make it not duplicate for the "get_finder" function. 
             if (host_ra is not None) and (host_dec is not None):
                 host_pa, host_sep = get_host_PA_and_sep(ra_deg, dec_deg, host_ra, host_dec)
-                pa_offset = 30 #30 degree offset in slit viewing camera PA
+                # pa_offset = pa_offset #30 degree offset in slit viewing camera PA
+                #Define pa_offset based on instrument
 
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
                             minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = None,\
