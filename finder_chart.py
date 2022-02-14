@@ -74,7 +74,7 @@ def get_offset(ra1, dec1, ra2, dec2):
     
     return dra.to(u.arcsec).value, ddec.to(u.arcsec).value
 
-def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
+def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=10, maxmag=18.5):
     '''
     Sends a VO query to the SkyMapper catalogue.
     '''
@@ -100,7 +100,7 @@ def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5):
     
     return newcat
     
-def query_ps1_catalogue(ra, dec, radius_deg, minmag=15, maxmag=18.5, debug = False):
+def query_ps1_catalogue(ra, dec, radius_deg, minmag=10, maxmag=18.5, debug = False):
     '''
     Sends a VO query to the PS1 catalogue.
     Filters the result by mangitude (between 15 and 18.5)
@@ -383,6 +383,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     no_self_object = offsets.arcsec > min_separation
 
     catalog = catalog[no_self_object]
+    offsets = offsets[no_self_object]
     if (debug):
         print('After removing stars too close.')
         print (catalog)

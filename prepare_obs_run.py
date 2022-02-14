@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 #Define pa_offset based on instrument
 
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
-                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = None,\
+                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = max_separation,\
                             host_ra = host_ra, host_dec = host_dec, \
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png')
             print(starlist_entry)
@@ -154,7 +154,10 @@ if __name__ == '__main__':
             skip_host = False 
     print(all_starlist)
     ###Write to file
-    out_file = open(filename.split('.')[0]+'_final.txt', "w")
+    if args.telescope == 'NIRES':
+        out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
+    else:
+        out_file = open(filename.split('.')[0]+'_final.txt', "w")
     out_file.write(all_starlist)
     out_file.close()
 

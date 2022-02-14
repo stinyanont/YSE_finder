@@ -274,7 +274,8 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
 
     #picture coordinates of source and offset star
     x, y = wcs.all_world2pix([coords.ra.deg], [coords.dec.deg], 1)
-    xo, yo = wcs.all_world2pix([coords_offset.ra.deg], [coords_offset.dec.deg], 1)
+    if coords_offset is not None:
+        xo, yo = wcs.all_world2pix([coords_offset.ra.deg], [coords_offset.dec.deg], 1)
 
     #dimension of slit
     dx = 0.55/2 #0.55"
@@ -282,7 +283,8 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
 
     #Define slit for source and offset star
     slit = Rectangle((x[0]-dx, y[0]-dy), 2*dx, 2*dy, color = 'w', lw = 0.5)
-    slit_o = Rectangle((xo[0]-dx, yo[0]-dy), 2*dx, 2*dy, color = 'r', lw = 0.5)
+    if coords_offset is not None:
+        slit_o = Rectangle((xo[0]-dx, yo[0]-dy), 2*dx, 2*dy, color = 'r', lw = 0.5)
 
     #Define guider field for source and offset star
     guider_dx = 3.44*60*1.1 #...shouldn't this number be known? This is the guider offset of around 3.8 arcmin
@@ -291,16 +293,17 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
     Guider = Rectangle((x[0]+guider_dx-guider_dim/2, y[0]-guider_dim/2), guider_dim,guider_dim, \
                     color = 'w', fill = False, lw = 0.5)#, \
                     #transform = transforms.Affine2D.rotate_around(x = x[0],y =  y[0],theta =  np.radians(PA)))
-
-    Guider_o = Rectangle((xo[0]+guider_dx-guider_dim/2, yo[0]-guider_dim/2), guider_dim,guider_dim, \
+    if coords_offset is not None:
+        Guider_o = Rectangle((xo[0]+guider_dx-guider_dim/2, yo[0]-guider_dim/2), guider_dim,guider_dim, \
                     color = 'r', fill = False, lw = 0.5)
 
     #Define guider circle for source and offset star
     Guider_path_in  = Circle((x[0], y[0]), guider_dx-guider_dim/2, fill = False, color = 'w', lw = 0.5,ls = '--')
     Guider_path_out = Circle((x[0], y[0]), guider_dx+guider_dim/2, fill = False, color = 'w', lw = 0.5,ls = '--')
 
-    Guider_o_path_in  = Circle((xo[0], yo[0]), guider_dx-guider_dim/2, fill = False, color = 'r', lw = 0.5, ls = '--')
-    Guider_o_path_out = Circle((xo[0], yo[0]), guider_dx+guider_dim/2, fill = False, color = 'r', lw = 0.5, ls = '--')
+    if coords_offset is not None:
+        Guider_o_path_in  = Circle((xo[0], yo[0]), guider_dx-guider_dim/2, fill = False, color = 'r', lw = 0.5, ls = '--')
+        Guider_o_path_out = Circle((xo[0], yo[0]), guider_dx+guider_dim/2, fill = False, color = 'r', lw = 0.5, ls = '--')
 
 
     #ROTATE
@@ -309,23 +312,28 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
     PA = 0
 
     rot = transforms.Affine2D().rotate_around(x[0], y[0],np.radians(PA))+ ax.transData
-    rot_o = transforms.Affine2D().rotate_around(xo[0], yo[0],np.radians(PA))+ ax.transData
+    if coords_offset is not None:
+       rot_o = transforms.Affine2D().rotate_around(xo[0], yo[0],np.radians(PA))+ ax.transData
 
     Guider.set_transform(rot)
     slit.set_transform(rot)
-    Guider_o.set_transform(rot_o)
-    slit_o.set_transform(rot_o)
+    if coords_offset is not None:
+        Guider_o.set_transform(rot_o)
+        slit_o.set_transform(rot_o)
 
     #Add all these overlays to the DSS image
     ax.add_patch(slit)
     ax.add_patch(Guider)
-    ax.add_patch(slit_o)
-    ax.add_patch(Guider_o)
+    if coords_offset is not None:
+        ax.add_patch(slit_o)
+        ax.add_patch(Guider_o)
 
     ax.add_patch(Guider_path_in )
     ax.add_patch(Guider_path_out)
-    ax.add_patch(Guider_o_path_in )
-    ax.add_patch(Guider_o_path_out)
+
+    if coords_offset is not None:
+        ax.add_patch(Guider_o_path_in )
+        ax.add_patch(Guider_o_path_out)
 
     ax.tick_params(labelsize = 14)
     ax.set_xlabel('RA', fontsize = 16)
@@ -390,6 +398,13 @@ if __name__ == '__main__':
 
     #Save the updated target list 
 
+    print("###############NIRES PA Selection Tool###############")
+    print("Your supplied target list should be in the Keck fixed-width format.")
+    print("Each target could have ONE offset star in the next line.")
+    print("The format is:")
+    print("SN2034abc       xxxxxxx")
+    print("SN2034abc_S1    xxxxxxx")
+
     parser = argparse.ArgumentParser(description=\
         '''
         Creates the finder charts for the whole night, provided a target list file.
@@ -424,5 +439,51 @@ if __name__ == '__main__':
     coords = SkyCoord(targets['RA'], targets['Dec'], unit = (u.hourangle, u.deg))
 
     all_starlist = ''
-    skip_offset_star = False
+
+    is_offset_star = False
+
+    if args.debug:
+        print(targets)
+
+    ######Loop through the target list 
+    for i in range(len(targets)):
+        if is_offset_star == False: #this entry is not offset star, treat as target
+            name = names[i]
+            # ra_deg = coords[i].ra.deg
+            # dec_deg = coords[i].dec.deg
+            target_coord = coords[i]
+            # mag = mags[i]
+            print("Making NIRES PA Selection GUI for %s."%name)
+            if i < len(targets)-1: #not the last item
+                next_entry = names[i+1]
+                if next_entry.split('_')[0] == name and "S" in next_entry.split('_')[1]: #next entry is offset star
+                    # offset_ra = coords[i+1].ra.deg
+                    # offset_dec = coords[i+1].dec.deg
+                    offset_coord = coords[i+1]
+                    print("Offset star provided. RA = %.5f Dec = %.5f"%(coords[i+1].ra.deg, coords[i+1].dec.deg))
+                    is_offset_star = True #Because of this flag, the next item is skipped. 
+                else:
+                    offset_coord = None
+            else: #For the last item, no host is provided. 
+                offset_coord = None
+
+            # Run the PA selection tool
+            finalPA = plot_NIRES_fov(target_coord, offset_coord, name)
+
+            starlist_entry = "{:s}{:s} {:s}  {:s}  rotmode=pa rotdest={:.2f} {:s} \n".\
+                format( targets[i]['names'].ljust(16), targets[i]['RA'], targets[i]['Dec'], str(targets[i]['epoch']), finalPA,  targets[i]['comments'])
+            if is_offset_star:
+                starlist_entry += "{:s}{:s} {:s}  {:s}  rotmode=pa rotdest={:.2f} {:s} \n".\
+                format( targets[i+1]['names'].ljust(16), targets[i+1]['RA'], targets[i+1]['Dec'], str(targets[i+1]['epoch']), finalPA,  targets[i+1]['comments'])
+            if args.debug:
+                print(starlist_entry)
+            all_starlist += starlist_entry
+
+        elif is_offset_star == True: #In this case, the next item should be a target
+            is_offset_star = False 
+    print(all_starlist)
+    ###Write to file
+    out_file = open(filename.split('.')[0]+'_final.txt', "w")
+    out_file.write(all_starlist)
+    out_file.close()
 
