@@ -12,6 +12,7 @@ from astropy import coordinates
 import sys, argparse
 import numpy as np
 import os
+import time
 
 from finder_chart import get_finder, get_host_PA_and_sep
 
@@ -41,6 +42,9 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--debug", action="store_true",
                     help="debug mode")
 
+    parser.add_argument("--skymapper", action="store_true",
+                    help="Use skymapper instead of PS1")
+
     args = parser.parse_args()
 
     #Check if correct number of arguments are given
@@ -68,6 +72,7 @@ if __name__ == '__main__':
     skip_host = False
     ######Now, call finder_chart.py
     for i in range(len(targets)):
+        # time.sleep(5)
         if skip_host == False: #this entry is not host, treat as target
             name = names[i]
             ra_deg = coords[i].ra.deg
@@ -138,7 +143,8 @@ if __name__ == '__main__':
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
                             minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = max_separation,\
                             host_ra = host_ra, host_dec = host_dec, \
-                            starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png')
+                            starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png',
+                            use_skymapper = args.skymapper)
             print(starlist_entry)
             all_starlist += starlist_entry
             ###If requesting rotated finder chart
