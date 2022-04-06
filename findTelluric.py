@@ -12,7 +12,7 @@ def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 4, Vmax = 1
     """
     #Define what columns to query and what the conditions are
     hip_viz = Vizier(columns=['HIP', 'RAhms', 'DEdms', 'Vmag', 'SpType'], \
-               column_filters={"Vmag":"%s..%s"%(str(Vmin), str(Vmax)), "SpType":spec_type})
+               column_filters={"Vmag":"%s..%s"%(str(Vmin), str(Vmax)), "SpType":spec_type}, row_limit = -1)
 
     #query. Use twice the max distance and add flag if the closest one is too far
     result = hip_viz.query_region(coords, radius=2*max_distance*u.deg, catalog='I/239')
@@ -124,12 +124,19 @@ if __name__ == "__main__":
                         #Write best telluric to output file
                         if tellurics is not None:
                             #Two Closest telluric in distance
-                            #Closest telluric in RA
                             ### FROM EXPERIENCE, closest telluric in RA is useless. Get 2 closest in distance. 
                             # best_tel_dist = tellurics[tellurics['distance'] == np.min(tellurics['distance'])][0]
                             tellurics.sort('distance')
-                            best_tel_dist = tellurics[0]
-                            best_tel_dist2 = tellurics[1]
+                            min_RA_sep = 10 #arcmin
+                            RA_far_enough = tellurics["abs_dRA"] > min_RA_sep/60*15 #ra difference smaller than 10 minutes is probably too close
+                            # print(tellurics)
+                            try:
+                                best_tel_dist = tellurics[RA_far_enough][0]
+                                best_tel_dist2 = tellurics[RA_far_enough][1]
+                            except:
+                                print("All telluric are closer than %d arcmin in RA."%min_RA_sep)
+                                best_tel_dist = tellurics[0]
+                                best_tel_dist2 = tellurics[1]      
                             # tellurics.sort('abs_dRA')
                             # best_tel_ra = tellurics[0]
                             # print(best_tel_ra)
