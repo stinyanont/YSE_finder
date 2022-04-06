@@ -431,6 +431,7 @@ if __name__ == '__main__':
                     col_starts=(0, 16, 28, 42, 50),
                     col_ends=(15, 27, 41, 49, 140),
                     names = ('names', 'RA', 'Dec', 'epoch', 'comments'))
+        print(targets)
     except:
         print('Make sure your supplied target list is in the Keck fixed width format.')
 

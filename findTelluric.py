@@ -82,9 +82,24 @@ if __name__ == "__main__":
                 if "Telluric" not in (i.split(cmt)[1]): #Not already a Telluric source
                     splitted = i.split()
                     if "_S" not in i.split()[0]: #this is a target, not an offset star
-                        if format == 'iobserve':
+                        if format == 'iobserve': # hh:mm:ss dd:mm:ss
                             source_coords  = SkyCoord(ra =splitted[1], dec = splitted[2], unit = (u.hourangle, u.deg))
-                        elif format == 'growth' or format == 'keck':
+                            ra_h = splitted[1].split(':')[0]
+                            ra_m = splitted[1].split(':')[1]
+                            ra_s = splitted[1].split(':')[2]
+                            dec_d = splitted[2].split(':')[0]
+                            dec_m = splitted[2].split(':')[1]
+                            dec_s = splitted[2].split(':')[2]
+                            # dec = splitted[4]+' '+splitted[5]+' '+splitted[6]
+                            # source_coords = SkyCoord(ra = ra, dec = dec, unit = (u.hourangle, u.deg))
+                            # print(source_coords)
+                        elif format == 'growth' or format == 'keck': # hh mm ss  dd mm ss
+                            ra_h =  splitted[1]
+                            ra_m =  splitted[2]
+                            ra_s =  splitted[3]
+                            dec_d = splitted[4]
+                            dec_m = splitted[5]
+                            dec_s = splitted[6]                            
                             ra = splitted[1]+' '+splitted[2]+' '+splitted[3]
                             dec = splitted[4]+' '+splitted[5]+' '+splitted[6]
                             source_coords = SkyCoord(ra = ra, dec = dec, unit = (u.hourangle, u.deg))
@@ -92,8 +107,8 @@ if __name__ == "__main__":
                         #Write source to output file
                         if outformat == 'irtf':
                             irtf_out_string = '{:s}     {:s}{:s}:{:s}:{:s}  {:s}:{:s}:{:s} 2000.0 0.0 0.0'.format(str(irtf_counter).zfill(2), splitted[0].ljust(14), \
-                                                                                                          splitted[1],splitted[2],splitted[3], \
-                                                                                                        splitted[4],splitted[5],splitted[6])
+                                                                                                          ra_h, ra_m, ra_s, \
+                                                                                                        dec_d,dec_m,dec_s)
                             out_file.write(irtf_out_string+'\n')
                             irtf_counter+=1
                         else:
@@ -128,9 +143,9 @@ if __name__ == "__main__":
                                                     '  2000.0  '+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist2['Vmag'], best_tel_dist2['distance'], best_tel_dist2['dRA'])  
                                 else:
                                     outstring1 = ('HIP'+str(best_tel_dist['HIP'])).ljust(16)+best_tel_dist['RAhms'].replace(' ',spc)+' '+best_tel_dist['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  rotmode=pa rotdest=%s'%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist['Vmag'], best_tel_dist['distance'], best_tel_dist['dRA'])   
+                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist['Vmag'], best_tel_dist['distance'], best_tel_dist['dRA'])   
                                     outstring2 = ('HIP'+str(best_tel_dist2['HIP'])).ljust(16)+best_tel_dist2['RAhms'].replace(' ',spc)+' '+best_tel_dist2['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  rotmode=pa rotdest=%s'%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist2['Vmag'], best_tel_dist2['distance'], best_tel_dist2['dRA'])                                      
+                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist2['Vmag'], best_tel_dist2['distance'], best_tel_dist2['dRA'])                                      
                             elif outformat == 'irtf':
                                 outstring1 = str(irtf_counter).zfill(2)+'     '+('HIP'+str(best_tel_dist['HIP'])).ljust(14)+best_tel_dist['RAhms'].replace(' ',':')+'  '+best_tel_dist['DEdms'].replace(' ',':').ljust(12)+\
                                                 ' 2000.0 0.0 0.0\n'

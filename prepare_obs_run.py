@@ -97,7 +97,8 @@ if __name__ == '__main__':
             else: #For the last item, no host is provided. 
                 host_ra = None
                 host_dec = None
-            
+            #By default, get 3 offset stars
+            num_offset_stars = 3
             # print(host_ra, host_dec)
             if args.telescope == 'Keck':
                 finder_size = 3/60 #3 arcmin, LRIS, this is in degree
@@ -123,6 +124,7 @@ if __name__ == '__main__':
                 min_mag = 5
                 max_mag = 18  
                 pa_offset = 0
+                num_offset_stars = 3 #For NIRES, only do one
             else:
                 print("Telescope should be eihter Keck or Lick; default to Lick.")  
                 finder_size = 6/60 #4 arcmin, Kast
@@ -141,7 +143,7 @@ if __name__ == '__main__':
                 #Define pa_offset based on instrument
 
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
-                            minmag=min_mag, maxmag=max_mag, num_offset_stars = 3, min_separation = minsep, max_separation = max_separation,\
+                            minmag=min_mag, maxmag=max_mag, num_offset_stars = num_offset_stars, min_separation = minsep, max_separation = max_separation,\
                             host_ra = host_ra, host_dec = host_dec, \
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png',
                             use_skymapper = args.skymapper)
