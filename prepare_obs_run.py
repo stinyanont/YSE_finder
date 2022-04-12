@@ -43,10 +43,13 @@ if __name__ == '__main__':
                     help="debug mode")
 
     parser.add_argument("--skymapper", action="store_true",
-                    help="Use skymapper instead of PS1")
+                    help="Use skymapper instead of PS1. THIS DOESN'T WORK CURRENTLY.")
+
+    parser.add_argument("--dss", action="store_true",
+                    help="Use DSS instead of PS1")
 
     args = parser.parse_args()
-
+    # print(args.dss)
     #Check if correct number of arguments are given
     # if len(sys.argv) != 2:
     # 	print ("Usage: prepare_obs_run.py target_list_filename")
@@ -142,10 +145,18 @@ if __name__ == '__main__':
                 # pa_offset = pa_offset #30 degree offset in slit viewing camera PA
                 #Define pa_offset based on instrument
 
+            #check which server to use. Default is ps1, but can use DSS if needed. 
+            #TO DO: Remove sky mapper support. 
+            if args.dss:
+                server = 'dss'
+            else:
+                server = 'ps1'
+            # print(server)
+
             starlist_entry = get_finder( ra_deg, dec_deg, name,  finder_size, mag = mag, \
                             minmag=min_mag, maxmag=max_mag, num_offset_stars = num_offset_stars, min_separation = minsep, max_separation = max_separation,\
                             host_ra = host_ra, host_dec = host_dec, \
-                            starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png',
+                            starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png', server = server,
                             use_skymapper = args.skymapper)
             print(starlist_entry)
             all_starlist += starlist_entry

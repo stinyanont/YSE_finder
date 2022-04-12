@@ -28,6 +28,8 @@ from scipy.ndimage.filters import gaussian_filter
 import warnings
 warnings.filterwarnings("ignore")
 
+from astroquery.skyview import SkyView
+
 
 
 
@@ -376,12 +378,13 @@ def query_ps1_new_mast(ra, dec, radius_deg, minmag=10, maxmag=18.5,debug = False
     return newcat
 
 
-def get_fits_image(ra, dec, rad, debug=False):
+def get_fits_image(ra, dec, rad, server = 'ps1', debug=False):
     '''
-    Connects to the PS1 or SkyMapper image service to retrieve the fits file to be used as a bse for the finder chart.
+    Connects to the PS1, DSS, or SkyMapper image service to retrieve the fits file to be used as a bse for the finder chart.
     '''
+    # print(server)
     #If dec> -30, we have Pan-STARRS
-    if dec > -35:
+    if dec > -35 and server == 'ps1':
         # Construct URL to download Pan-STARRS image cutout, and save to tmp.fits
     
         # First find the index of images and retrieve the file of the image that we want to use.
@@ -389,7 +392,7 @@ def get_fits_image(ra, dec, rad, debug=False):
         urlretrieve(image_index_url, '/tmp/ps1_image_index.txt')
         ix = Table.read('/tmp/ps1_image_index.txt', format="ascii")
         f = ix['filename'].data[0]
-        
+
         image_url = "http://ps1images.stsci.edu/cgi-bin/fitscut.cgi?red={0}&format=fits&size={1}&ra={2}&dec={3}".format(f, int(np.round(rad*3600*4, 0)), ra, dec)
         if (debug):
             print ("URL:", image_url)
@@ -397,26 +400,31 @@ def get_fits_image(ra, dec, rad, debug=False):
             
         #Store the object to a fits file.
         urlretrieve(image_url, '/tmp/tmp.fits')
-        
-            
-    #Otherwise, we have SkyMapper   
-    else:    
-        url="http://skymappersiap.asvo.nci.org.au/dr1_cutout/query?POS=%.6f,%.6f&SIZE=%.3f&FORMAT=image/fits&INTERSECT=center&RESPONSEFORMAT=CSV"%(ra, dec, rad)
-        page = urlopen(url)
-        content = page.read()
-        f = open("/tmp/skymapper_image_index.csv", "wb")
-        f.write(content)
-        f.close()
-        
-        ix = Table.read('/tmp/skymapper_image_index.csv', format="ascii.csv")
 
-        mask = ((ix['band']=='r')|(ix['band']=='g'))
+    #Try DSS2-R otherwise
+    else:
+        files = SkyView.get_images(position= SkyCoord(ra,dec,unit = (u.deg, u.deg)),
+                                survey=['DSS2 Red'])
+        files[0].writeto('/tmp/tmp.fits', overwrite = True)
+            
+    # #Otherwise, we have SkyMapper   
+    # else:    
+    #     url="http://skymappersiap.asvo.nci.org.au/dr1_cutout/query?POS=%.6f,%.6f&SIZE=%.3f&FORMAT=image/fits&INTERSECT=center&RESPONSEFORMAT=CSV"%(ra, dec, rad)
+    #     page = urlopen(url)
+    #     content = page.read()
+    #     f = open("/tmp/skymapper_image_index.csv", "wb")
+    #     f.write(content)
+    #     f.close()
         
-        ix = ix[mask]
-        ix.sort(keys='exptime')
+    #     ix = Table.read('/tmp/skymapper_image_index.csv', format="ascii.csv")
+
+    #     mask = ((ix['band']=='r')|(ix['band']=='g'))
+        
+    #     ix = ix[mask]
+    #     ix.sort(keys='exptime')
     
-        image_url = ix['get_image'][-1]
-        urlretrieve(image_url, '/tmp/tmp.fits')
+    #     image_url = ix['get_image'][-1]
+    #     urlretrieve(image_url, '/tmp/tmp.fits')
 
 
 
@@ -522,7 +530,7 @@ def get_host_PA_and_sep(ra, dec, host_ra, host_dec):
 def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=True, \
                 return_starlist = False, \
                 host_ra = None, host_dec = None, \
-                telescope="Keck", directory=".", use_skymapper = False,\
+                telescope="Keck", directory=".", use_skymapper = False, server = 'ps1',\
                 minmag=13, maxmag=19.5, num_offset_stars = 3, min_separation = 1, max_separation = None,\
                 mag=np.nan, \
                 marker = 'circle', source_comments = None, output_format = 'png'):
@@ -651,8 +659,8 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
 
     if (debug): print (catalog)
 
-    ###########Get FITS image of the FoV from DSS
-    image_file = get_fits_image(ra, dec, rad, debug=debug)    
+    ###########Get FITS image of the FoV from PS1 or DSS
+    image_file = get_fits_image(ra, dec, rad, server = server, debug=debug)    
 
     if image_file is None:
         print ("FATAL ERROR! Your FITS image could not be retrieved.")
@@ -742,12 +750,19 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
             plt.plot([ref_pix[i][0,0], (ref_pix[i][0,0]) ] , [ref_pix[i][0,1]+10,(ref_pix[i][0,1])+35], ls = '-',color = cols[i], lw=2)
         if marker == 'circle':
             # print((ref_pix[i][0,0], ref_pix[i][0,1]))
-            circ = plt.Circle((ref_pix[i][0,0], ref_pix[i][0,1]), 35, color=cols[i], fill=False, lw = 3)
+            #set the size due to different plate scales in different surveys. 
+            if server == 'ps1': #just to be explicit
+                circ_size = 35
+            elif server == 'dss':
+                circ_size = 10
+            else:
+                circ_size = 35
+            circ = plt.Circle((ref_pix[i][0,0], ref_pix[i][0,1]), circ_size, color=cols[i], fill=False, lw = 3)
             ax = plt.gca()
             ax.add_artist(circ)
         plt.annotate("S%d"%(i+1), xy=(ref_pix[i][0,0], ref_pix[i][0,1]),  xycoords='data',xytext=(22,-3), textcoords='offset points', color=cols[i])
 
-    # Set limits to size of DSS image
+    # Set limits to size of the image
     ax.set_xlim([0,(image[0].data.shape[0])])
     ax.set_ylim([0,(image[0].data.shape[1])])
 
@@ -931,8 +946,8 @@ if __name__ == '__main__':
         
     #Check if correct number of arguments are given
     if len(sys.argv) < 4:
-    	print ("Usage: finder_chart.py <RA> <Dec> <Name>  <rad [deg]> <telescope [P200|Keck]>")
-    	sys.exit()
+        print ("Usage: finder_chart.py <RA> <Dec> <Name>  <rad [deg]> <telescope [P200|Keck]>")
+        sys.exit()
      
     ra=sys.argv[1]
     dec=sys.argv[2]

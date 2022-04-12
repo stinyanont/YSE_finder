@@ -129,10 +129,10 @@ if __name__ == "__main__":
                             tellurics.sort('distance')
                             min_RA_sep = 10 #arcmin
                             good_RA_diff = np.logical_and(tellurics["abs_dRA"] > min_RA_sep/60*15 , \
-                                                            tellurics["abs_dRA"] < 1*15
+                                                            tellurics["abs_dRA"] < 1*15)
                             #ra difference bigger than 10 mins, smaller than an hour
-                            # print(tellurics)
-                            if np.sum(good_RA_diff) > 2:
+                            print(tellurics[good_RA_diff])
+                            if np.sum(good_RA_diff.astype(int)) > 2:
                                 best_tel_dist = tellurics[good_RA_diff][0]
                                 best_tel_dist2 = tellurics[good_RA_diff][1]
                             else:
