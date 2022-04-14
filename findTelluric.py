@@ -131,7 +131,8 @@ if __name__ == "__main__":
                             good_RA_diff = np.logical_and(tellurics["abs_dRA"] > min_RA_sep/60*15 , \
                                                             tellurics["abs_dRA"] < 1*15)
                             #ra difference bigger than 10 mins, smaller than an hour
-                            print(tellurics[good_RA_diff])
+                            # print(tellurics[good_RA_diff])
+                            ###########################################TO DO, MAKE SURE YOU ALWAYS GET ONE TO EAST AND ONE TO WEST##################
                             if np.sum(good_RA_diff.astype(int)) > 2:
                                 best_tel_dist = tellurics[good_RA_diff][0]
                                 best_tel_dist2 = tellurics[good_RA_diff][1]
