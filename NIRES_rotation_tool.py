@@ -482,9 +482,9 @@ if __name__ == '__main__':
 
         elif is_offset_star == True: #In this case, the next item should be a target
             is_offset_star = False 
+        ###Keep writing to file so we don't lose progress.
+        out_file = open(filename.split('.')[0]+'_final.txt', "w")
+        out_file.write(all_starlist)
+        out_file.close()
     print(all_starlist)
-    ###Write to file
-    out_file = open(filename.split('.')[0]+'_final.txt', "w")
-    out_file.write(all_starlist)
-    out_file.close()
 
