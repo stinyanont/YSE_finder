@@ -6,13 +6,14 @@ target list in a line below the target, the host and the PA are included in the 
 In the end, you get a finder chart for each target, and an updated target list with the PA 
 (if host is provided) and the offset stars. 
 """
-import astropy.io.ascii as asci
+#import astropy.io.ascii as asci
 import astropy.units as u
 from astropy import coordinates
 import sys, argparse
 import numpy as np
 import os
 import time
+import pandas as pd
 
 from finder_chart import get_finder, get_host_PA_and_sep
 
@@ -57,18 +58,20 @@ if __name__ == '__main__':
 
     # filename = sys.argv[1]
     filename = args.filename
-    converters = {'col5': [asci.convert_numpy(np.str)]} #This is so that -00 gets preserved as -00
+    converters = {4: str} #This is so that -00 gets preserved as -00
 
-    targets = asci.read(filename, comment = '!', format = 'no_header', converters = converters)
+    #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False, converters = converters)
+    #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False)
+    targets = pd.read_csv(filename, delimiter= '\s+',header=None,usecols=range(0,11),skiprows=1,converters=converters)
 
-    names = np.array(targets['col1'])
+    names = np.array(targets[0])
 
-    RA = np.array([str(x['col2']) + ':' +str(x['col3']) +':' + str(x['col4']) for x in targets])
-    Dec = np.array([str(x['col5']) + ':' +str(x['col6']) +':' + str(x['col7']) for x in targets])
+    RA = np.array([str(x[1]) + ':' +str(x[2]) +':' + str(x[3]) for i,x in targets.iterrows()])
+    Dec = np.array([str(x[4]) + ':' +str(x[5]) +':' + str(x[6]) for i,x in targets.iterrows()])
 
     coords = coordinates.SkyCoord(RA, Dec, unit = (u.hourangle, u.deg))
 
-    mags = np.array(targets['col11'])
+    mags = np.array(targets[10])
 
     all_starlist = ''
 
@@ -129,7 +132,7 @@ if __name__ == '__main__':
                 pa_offset = 0
                 num_offset_stars = 3 #For NIRES, only do one
             else:
-                print("Telescope should be eihter Keck or Lick; default to Lick.")  
+                print("Telescope should be either Keck or Lick; default to Lick.")  
                 finder_size = 6/60 #4 arcmin, Kast
                 max_separation = 6*60 #3 arcmin, Kast 
                 min_mag = 5
