@@ -76,6 +76,12 @@ if __name__ == '__main__':
     all_starlist = ''
 
     skip_host = False
+
+    ###Start a file to write to. 
+    if args.telescope == 'NIRES':
+        out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
+    else:
+        out_file = open(filename.split('.')[0]+'_final.txt', "w")
     ######Now, call finder_chart.py
     for i in range(len(targets)):
         # time.sleep(5)
@@ -162,6 +168,7 @@ if __name__ == '__main__':
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png', server = server,
                             use_skymapper = args.skymapper)
             print(starlist_entry)
+            out_file.write(starlist_entry) #write as we go
             all_starlist += starlist_entry
             ###If requesting rotated finder chart
             if args.rotate and ((host_ra is not None) and (host_dec is not None)):
@@ -174,12 +181,9 @@ if __name__ == '__main__':
                     print("Check if imagemagick is installed.")
         elif skip_host == True: #In this case, the next item should be a target
             skip_host = False 
+        time.sleep(10)
     print(all_starlist)
-    ###Write to file
-    if args.telescope == 'NIRES':
-        out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
-    else:
-        out_file = open(filename.split('.')[0]+'_final.txt', "w")
-    out_file.write(all_starlist)
+    # keep writing while the code is running
+    # out_file.write(all_starlist)
     out_file.close()
 
