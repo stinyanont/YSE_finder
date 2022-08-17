@@ -94,8 +94,8 @@ def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=10, maxmag=18.5):
     Sends a VO query to the SkyMapper catalogue.
     '''
     
-    url = "http://skymapper.anu.edu.au/sm-cone/query?RA=%.6f&DEC=%.6f&SR=%.4f&RESPONSEFORMAT=CSV"%(ra, dec, radius_deg)
-
+    url = "http://skymapper.anu.edu.au/sm-cone/public/query?RA=%.6f&DEC=%.6f&SR=%.4f&RESPONSEFORMAT=CSV"%(ra, dec, radius_deg)
+    # print(url)
     f = open("/tmp/skymapper_cat.csv", "wb")
     page = urlopen(url)
     content = page.read()
@@ -466,10 +466,10 @@ def get_cutout(ra, dec, name, rad, debug=True):
         dec=float(dec)
     except:
         ra, dec = hour2deg(ra, dec) 
-    # try:
-    #     catalog = query_ps1_new_mast(ra, dec, rad, debug = debug)
-    # except:
-    catalog = query_ps1_catalogue(ra, dec, rad, debug = debug)
+    try:
+        catalog = query_ps1_new_mast(ra, dec, rad, debug = debug)
+    except:
+        catalog = query_ps1_catalogue(ra, dec, rad, debug = debug)
     # 
     
     if (debug):
@@ -598,21 +598,24 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         print("using SkyMapper")
         catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
     else:
-        # try:
-        #     catalog = query_ps1_new_mast(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
-        # except:
-        catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
+        try:
+            catalog = query_ps1_new_mast(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
+        except:
+            catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
     if (debug):
         print("Catalog returned by the function.")
         print (catalog)
 
-    
+    ###Check if need fainter stars
     if (len(catalog)<3):
         if debug: print ("Looking for a bit fainter stars up to mag: %.2f"%(maxmag+0.5))
-        # try:
-        #     catalog = query_ps1_new_mast(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5, debug = debug)
-        # except:
-        catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
+        if dec < -35 or use_skymapper:
+            catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
+        else:
+            try:
+                catalog = query_ps1_new_mast(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5, debug = debug)
+            except:
+                catalog = query_ps1_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
 
     # if (len(catalog)<3):
     #     print ("Restarting with larger radius %.2f arcmin"%(rad*60+0.5))
