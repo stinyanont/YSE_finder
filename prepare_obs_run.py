@@ -63,6 +63,7 @@ if __name__ == '__main__':
     #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False, converters = converters)
     #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False)
     targets = pd.read_csv(filename, delimiter= '\s+',header=None,usecols=range(0,11),skiprows=1,converters=converters)
+    targets=targets.drop_duplicates()
 
     names = np.array(targets[0])
 
