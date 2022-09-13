@@ -12,6 +12,7 @@ from matplotlib.widgets import Slider, Button
 
 import sys, glob, argparse
 
+from PIL import Image
 
 #############Define the matplotlib slider tool
 #Vertical Slider bar from https://stackoverflow.com/questions/25934279/add-a-vertical-slider-with-matplotlib
@@ -420,6 +421,9 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--debug", action="store_true",
                     help="debug mode")
 
+    parser.add_argument("-r", "--rotate", action="store_true",
+                        help="produce rotated finder chart")
+
     args = parser.parse_args()
 
     #get file name
@@ -484,7 +488,21 @@ if __name__ == '__main__':
             is_offset_star = False 
         ###Keep writing to file so we don't lose progress.
         out_file = open(filename.split('.')[0]+'_final.txt', "w")
-        out_file.write(all_starlist)
+        out_file.write(all_starlist)        
         out_file.close()
+
+        if args.rotate:
+                print("Making rotated finder chart for NIRES")
+                try:
+                    finder_name = name+'_finder.png'
+                    rotated_finder = name+'_finder_rot.png'
+
+                    im = Image.open(finder_name)
+                    im_rotate=im.rotate(finalPA, resample=Image.BICUBIC, expand = True,fillcolor=(255,255,255))
+                    im_rotate.save(rotated_finder,dpi=(400,400))
+
+                except:
+                    print("Check if PIL library is installed.")
+
     print(all_starlist)
 
