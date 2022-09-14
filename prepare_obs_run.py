@@ -122,7 +122,7 @@ if __name__ == '__main__':
             elif args.telescope == 'Lick':
                 finder_size = 6/60 #6 arcmin, Kast
                 max_separation = 6*60 #6 arcmin, Kast 
-                min_mag = 5
+                min_mag = 10
                 max_mag = 18  
                 pa_offset = 0
             elif args.telescope == 'DEIMOS':

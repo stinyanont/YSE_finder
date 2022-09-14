@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.io import ascii as asci
 from astroquery.vizier import Vizier
+from astroquery.simbad import Simbad
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 import sys
@@ -19,10 +20,22 @@ def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 4, Vmax = 1
     # try:
     a0v_res = result[0] #[0] is Hipparcos; [1] is Tycho
 
+    #Get B mag from Simbad, also check spectral type
+    Simbad.add_votable_fields("flux(B)")
+    Simbad.add_votable_fields("flux(V)")
+    Simbad.add_votable_fields("sptype")
+
+    add_mag = Simbad.query_objects(["HIP"+str(x) for x in a0v_res['HIP']])
+
     res_coords = SkyCoord(ra = a0v_res['RAhms'], dec = a0v_res['DEdms'], unit = (u.hourangle, u.deg))
     a0v_res['distance'] = coords.separation(res_coords)
     a0v_res['dRA'] = (coords.ra.deg - res_coords.ra.deg)
     a0v_res['abs_dRA'] = np.abs(coords.ra.deg - res_coords.ra.deg)
+    a0v_res['Simbad_spt'] = add_mag['SP_TYPE']
+    a0v_res['Simbad_B'] = add_mag['FLUX_B']
+    a0v_res['Simbad_V'] = add_mag['FLUX_V']
+
+    actually_A0V = add_mag['SP_TYPE'] == 'A0V'
 
     #print(a0v_res)
 
@@ -34,12 +47,12 @@ def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 4, Vmax = 1
     #     print("No nearby A0V telluric")
     #     a0v_res = None
 
-    return a0v_res
+    return a0v_res[actually_A0V]
 
 #Now the part we execute
 
 if __name__ == "__main__":
-    format = 'growth' #or 'iobserve', or 'keck'
+    format = 'keck' #or 'iobserve', or 'keck'
     #growth is name hh mm ss dd mm ss !comments
     #iobserve is name hh:mm:ss dd:mm:ss #comments
     outformat = 'keck'
@@ -146,16 +159,20 @@ if __name__ == "__main__":
                             if outformat in ['iobserve', 'growth', 'keck']:
                                 if rotdest is None:
                                     outstring1 = ('HIP'+str(best_tel_dist['HIP'])).ljust(16)+best_tel_dist['RAhms'].replace(' ',spc)+' '+best_tel_dist['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  '+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist['Vmag'], best_tel_dist['distance'], best_tel_dist['dRA'])
+                                                    '  2000.0  '+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'%(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'],
+                                                     best_tel_dist['distance'], best_tel_dist['dRA'], best_tel_dist['Simbad_spt'])
                                     # outstring2 = ('HIP'+str(best_tel_ra['HIP'])).ljust(20)+best_tel_ra['RAhms'].replace(' ',spc)+'  '+best_tel_ra['DEdms'].replace(' ',spc)+\
                                     #                 '  2000.0  '+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_ra['Vmag'], best_tel_ra['distance'], best_tel_ra['dRA'])   
                                     outstring2 = ('HIP'+str(best_tel_dist2['HIP'])).ljust(16)+best_tel_dist2['RAhms'].replace(' ',spc)+' '+best_tel_dist2['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  '+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist2['Vmag'], best_tel_dist2['distance'], best_tel_dist2['dRA'])  
+                                                    '  2000.0  '+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'%(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], 
+                                                    best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist['Simbad_spt'])  
                                 else:
                                     outstring1 = ('HIP'+str(best_tel_dist['HIP'])).ljust(16)+best_tel_dist['RAhms'].replace(' ',spc)+' '+best_tel_dist['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist['Vmag'], best_tel_dist['distance'], best_tel_dist['dRA'])   
+                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'\
+                                                    %(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], best_tel_dist['distance'], best_tel_dist['dRA'], best_tel_dist['Simbad_spt'])   
                                     outstring2 = ('HIP'+str(best_tel_dist2['HIP'])).ljust(16)+best_tel_dist2['RAhms'].replace(' ',spc)+' '+best_tel_dist2['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_dist2['Vmag'], best_tel_dist2['distance'], best_tel_dist2['dRA'])                                      
+                                                    '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'\
+                                                    %(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist['Simbad_spt'])                                      
                             elif outformat == 'irtf':
                                 outstring1 = str(irtf_counter).zfill(2)+'     '+('HIP'+str(best_tel_dist['HIP'])).ljust(14)+best_tel_dist['RAhms'].replace(' ',':')+'  '+best_tel_dist['DEdms'].replace(' ',':').ljust(12)+\
                                                 ' 2000.0 0.0 0.0\n'
