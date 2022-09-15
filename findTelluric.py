@@ -164,15 +164,15 @@ if __name__ == "__main__":
                                     # outstring2 = ('HIP'+str(best_tel_ra['HIP'])).ljust(20)+best_tel_ra['RAhms'].replace(' ',spc)+'  '+best_tel_ra['DEdms'].replace(' ',spc)+\
                                     #                 '  2000.0  '+cmt+' Telluric V = %.2f distance = %.2f deg, dRA = %.2f deg \n'%(best_tel_ra['Vmag'], best_tel_ra['distance'], best_tel_ra['dRA'])   
                                     outstring2 = ('HIP'+str(best_tel_dist2['HIP'])).ljust(16)+best_tel_dist2['RAhms'].replace(' ',spc)+' '+best_tel_dist2['DEdms'].replace(' ',spc).ljust(12)+\
-                                                    '  2000.0  '+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'%(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], 
-                                                    best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist['Simbad_spt'])  
+                                                    '  2000.0  '+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'%(best_tel_dist2['Simbad_B'], best_tel_dist2['Simbad_V'], 
+                                                    best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist2['Simbad_spt'])  
                                 else:
                                     outstring1 = ('HIP'+str(best_tel_dist['HIP'])).ljust(16)+best_tel_dist['RAhms'].replace(' ',spc)+' '+best_tel_dist['DEdms'].replace(' ',spc).ljust(12)+\
                                                     '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'\
                                                     %(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], best_tel_dist['distance'], best_tel_dist['dRA'], best_tel_dist['Simbad_spt'])   
                                     outstring2 = ('HIP'+str(best_tel_dist2['HIP'])).ljust(16)+best_tel_dist2['RAhms'].replace(' ',spc)+' '+best_tel_dist2['DEdms'].replace(' ',spc).ljust(12)+\
                                                     '  2000.0  rotmode=pa rotdest=%s '%(rotdest)+cmt+' Telluric B = %.2f V = %.2f distance = %.2f deg, dRA = %.2f deg SpT = %s \n'\
-                                                    %(best_tel_dist['Simbad_B'], best_tel_dist['Simbad_V'], best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist['Simbad_spt'])                                      
+                                                    %(best_tel_dist2['Simbad_B'], best_tel_dist2['Simbad_V'], best_tel_dist2['distance'], best_tel_dist2['dRA'], best_tel_dist2['Simbad_spt'])                                      
                             elif outformat == 'irtf':
                                 outstring1 = str(irtf_counter).zfill(2)+'     '+('HIP'+str(best_tel_dist['HIP'])).ljust(14)+best_tel_dist['RAhms'].replace(' ',':')+'  '+best_tel_dist['DEdms'].replace(' ',':').ljust(12)+\
                                                 ' 2000.0 0.0 0.0\n'
