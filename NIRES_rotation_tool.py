@@ -496,9 +496,11 @@ if __name__ == '__main__':
                 try:
                     finder_name = name+'_finder.png'
                     rotated_finder = name+'_finder_rot.png'
-
+                    # NIRES SVC is north down, so first we flip finders 180
+                    # then we rotate by rotdest clockwise (which is negative in PIL rotate)
+                    finder_rot=180-finalPA
                     im = Image.open(finder_name)
-                    im_rotate=im.rotate(finalPA, resample=Image.BICUBIC, expand = True,fillcolor=(255,255,255))
+                    im_rotate=im.rotate(finder_rot, resample=Image.BICUBIC, expand = True,fillcolor=(255,255,255))
                     im_rotate.save(rotated_finder,dpi=(400,400))
 
                 except:
