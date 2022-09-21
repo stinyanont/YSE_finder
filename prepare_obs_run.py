@@ -14,6 +14,8 @@ import numpy as np
 import os
 import time
 import pandas as pd
+from PIL import Image
+
 
 from finder_chart import get_finder, get_host_PA_and_sep
 
