@@ -177,9 +177,14 @@ if __name__ == '__main__':
                 try:
                     finder_name = name+'_finder.png'
                     rotated_finder = name+'_finder_rot.png'
-                    os.system('convert %s -virtual-pixel white +distort SRT %.2f %s'%(finder_name, host_pa+pa_offset, rotated_finder))
+                    finder_rot=-(host_pa+pa_offset)
+                    im = Image.open(finder_name)
+                    im_rotate=im.rotate(finder_rot, resample=Image.BICUBIC, expand = True,fillcolor=(255,255,255))
+                    im_rotate.save(rotated_finder,dpi=(400,400))
+                    #os.system('convert %s -virtual-pixel white +distort SRT %.2f %s'%(finder_name, host_pa+pa_offset, rotated_finder))
                 except:
-                    print("Check if imagemagick is installed.")
+                    print("Check if PIL library is installed.")
+
         elif skip_host == True: #In this case, the next item should be a target
             skip_host = False 
         time.sleep(10)
