@@ -295,94 +295,102 @@ def NIRES_target_exp_time(optical_mag):
 def LRIS_exp_time(optical_mag):
     optical_mag=float(optical_mag)
     if optical_mag<13:
-        exp_time_str='20 / 4x60s'
-        exp_time_b=60
-    if 13 <= optical_mag< 14:
-        exp_time_str='20 / 4x80'
-        exp_time_b=80
-    if 14 <= optical_mag< 15:
-        exp_time_str='30 / 4x100'
-        exp_time_b=100
-    if 15 <= optical_mag< 16:
-        exp_time_str='30 / 4x120'
+        exp_time_str='110, 100'
+        exp_time_b=110
+        exp_time_r=100
+        n_r=1
+        n_b=1
+    if 13 <= optical_mag< 15:
+        exp_time_str='120, 110'
         exp_time_b=120
-    if 16 <= optical_mag< 16.5:
-        exp_time_str='30 / 4x150'
-        exp_time_b=150
-    if 16.5 <= optical_mag< 17:
-        exp_time_str='30 / 4x200'
-        exp_time_b=200
-    if 17 <= optical_mag< 17.5:
-        exp_time_str='30 / 4x250'
+        exp_time_r=110
+        n_r=1
+        n_b=1
+    if 15 <= optical_mag< 17:
+        exp_time_str='250, 240'
         exp_time_b=250
-    if 17.5 <= optical_mag< 18:
-        exp_time_str='30 / 4x300'
-        exp_time_b=300
+        exp_time_r=240
+        n_r=1
+        n_b=1
+    if 17 <= optical_mag< 18:
+        exp_time_str='310, 300'
+        exp_time_b=310
         exp_time_r=300
-    if 18.0 <= optical_mag< 18.5:
-        exp_time_str='40 / 6x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 18.5 <= optical_mag< 19.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 19.0 <= optical_mag< 19.5:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 19.5 <= optical_mag< 20.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        n_r=1
+        n_b=1
+    if 18 <= optical_mag< 19:
+        exp_time_str='610, 600'
+        exp_time_b=610
+        exp_time_r=600
+        n_r=1
+        n_b=1
+    if 19 <= optical_mag< 19.5:
+        exp_time_str='900, 2x417'
+        exp_time_b=900
+        exp_time_r=417
+        n_r=2
+        n_b=1
+    if 19.5 <= optical_mag< 20:
+        exp_time_str='1000, 2x467'
+        exp_time_b=1000
+        exp_time_r=467
+        n_r=2
+        n_b=1
     if 20 <= optical_mag< 20.5:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 20.5 <= optical_mag< 21.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 21.0 <= optical_mag< 21.5:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 21.5 <= optical_mag< 22.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
-    if 22.0 <= optical_mag< 22.5:
-        exp_time_str='2100 / 3x657'
-        exp_time_b=2100
-        exp_time_r=657
+        exp_time_str='1100, 2x517'
+        exp_time_b=1100
+        exp_time_r=517
+        n_r=2
+        n_b=1
+    if 20.5 <= optical_mag< 21.5:
+        exp_time_str='1200, 2x567'
+        exp_time_b=1200
+        exp_time_r=567
+        n_r=2
+        n_b=1
+    if 21.5 <= optical_mag< 22.5:
+        exp_time_str='1800, 3x556'
+        exp_time_b=1800
+        exp_time_r=556
         n_r=3
         n_b=1
     if 22.5 <= optical_mag< 23.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        exp_time_str='2100, 3x656'
+        exp_time_b=2100
+        exp_time_r=656
+        n_r=3
+        n_b=1
     if 23.0 <= optical_mag< 23.5:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        exp_time_str='2x1200, 4x567'
+        exp_time_b=1200
+        exp_time_r=567
+        n_r=4
+        n_b=2
     if 23.5 <= optical_mag< 24.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        exp_time_str='2x1400, 4x667'
+        exp_time_b=1400
+        exp_time_r=667
+        n_r=4
+        n_b=2
     if 24.0 <= optical_mag< 24.5:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        exp_time_str='2x1800, 6x556'
+        exp_time_b=1800
+        exp_time_r=556
+        n_r=6
+        n_b=2
     if 24.5 <= optical_mag< 25.0:
-        exp_time_str='40 / 8x300'
-        exp_time_b=300
-        exp_time_r=300
+        exp_time_str='2x2000, 6x623'
+        exp_time_b=2000
+        exp_time_r=623
+        n_r=6
+        n_b=2
     if optical_mag>= 25:
-        exp_time_str='faint do you really want to do this?'
-        exp_time_b=300
-        exp_time_r=300
-
-    return exp_time_str,exp_time_b,exp_time_r
+        exp_time_str=''
+        exp_time_b=''
+        exp_time_r=''
+        n_r=''
+        n_b=''
+    return exp_time_str,exp_time_b,exp_time_r,n_b,n_r
 
 """import sys
 if len(sys.argv) < 3:
@@ -551,7 +559,7 @@ if __name__ == '__main__':
 
 
     if args.instrument=='NIRES':
-     main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \tTime(m)\tIndividual Exp\tTotal Exp(s)\tTotal Exp (min)\tSetting time(UT)\tWraps \t Warnings\n'
+     main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \t Rotdest \tTime(m) w overhead\tIndividual Time(s)\tTotal Time(s)\tTotal Time (min)\tSetting time(UT)\tWraps \t Warnings\n'
      shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
      fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
      full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
@@ -577,7 +585,7 @@ if __name__ == '__main__':
 
     if args.instrument=='LRIS':
      # need to copy lris log...
-     main_lris_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (b / r)\t PA \tTime(m)\tTotal Exp(s)\tTotal Exp (min)\tRising time(UT)\tAzimuth Range\t Wrap\n'
+     main_lris_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (b / r)\t Rotdest \tTime(m) w overhead\tTotal Time(s)\tTotal Time(min)\tRising time(UT)\tWraps\t Warnings\n'
      shalf_lris_header='Start(UT)\tEnd(18,12,8,0 deg) (UT)'
      fhalf_lris_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
      full_lris_header='Start(0,8,12,18 deg)(UT)\tEnd(18,12,8,0 deg) (UT)'
@@ -646,43 +654,48 @@ if __name__ == '__main__':
                        exp_time_str=NIRES_telluric_exp_time(vmag)[0]
                        exp_time=NIRES_telluric_exp_time(vmag)[1]
                        telluric_tot='00:10:00'
+                       rotdest=float(split[9][8:])
                        #total_exp_time_s=exp_time*len(dither)
                        #total_exp_time_m=total_exp_time_s/60.
-                       out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%s \t %s \t \t \t %s\t %s \t %s \n'%\
-                         (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,telluric_tot,exp_time,k2_set,wraps,warning_alt+' '+warning_moon))
+                       out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%.0f\t%s \t %s \t \t \t %s\t %s \t %s \n'%\
+                         (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,rotdest,telluric_tot,exp_time,k2_set,wraps,warning_alt+' '+warning_moon))
                       
                       if not "HIP" in name:
                        sn_mag=split[11].split('r=')[1]
                        exp_time_str=NIRES_target_exp_time(sn_mag)[0]
                        exp_time=NIRES_target_exp_time(sn_mag)[1]
                        dither=NIRES_target_exp_time(sn_mag)[2]
-
+                       rotdest=float(split[9][8:])
                        total_exp_time_s=exp_time*len(dither)
                        total_exp_time_m=math.ceil(total_exp_time_s/60.)
-                       time_w_overheads=total_exp_time_m+5 
-                       out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
-                         (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
+                       time_w_overheads=total_exp_time_m+7 # increased overheads to 7 minutes per target 
+                       out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
+                         (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
 
 
                     if args.instrument=='LRIS':
                      k1_rise=keck1_rising_time(source_coords, times['utdate'])
-                     print('K1 rising time is:',k1_rise)
+                     #print('K1 rising time is:',k1_rise)
                      if k1_rise==None:
                         k2_rise='-'
-                     #print(k1_rise.datetime)
-                     #print(split)
+
                      rmag=split[11]
-                     rotdest=split[9]
-                     exp_time_str=LRIS_exp_time(rmag[2:])[0]
-                     exp_time_b=LRIS_exp_time(rmag[2:])[1]
-                     exp_time_r=LRIS_exp_time(rmag[2:])[2]
-                     #total_exp_time_s=exp_time*len(dither)
-                     #total_exp_time_m=math.ceil(total_exp_time_s/60.)
-                     #time_w_overheads=total_exp_time_m+5
-                     #print('%s %s %s %s %s %s %s %s %s %s'%\
-                     #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,exp_time_b,exp_time_r,rotdest,rtime(k1_rise)))
-                     #out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%s \t %s \t \t \t %s\t %.0f-%.0f \n'%\
-                     #     (name,ra_sheet,dec_sheet))
+                     rotdest=float(split[9][8:])
+                     lris_et=LRIS_exp_time(rmag[2:])
+                     exp_time_str=lris_et[0]
+                     exp_time_b=lris_et[1]
+                     exp_time_r=lris_et[2]
+                     n_b=lris_et[3]
+                     n_r=lris_et[4]
+
+                     total_exp_time_s=exp_time_b*n_b
+                     total_exp_time_m=math.ceil(total_exp_time_s/60.)
+                     time_w_overheads=(total_exp_time_m)+5 
+
+                     #print('\t\t%s \t%s \t%s \t%s \t%s \t%.0f\t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
+                     #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
+                     out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
+                          (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
 
 
 
