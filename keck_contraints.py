@@ -12,6 +12,7 @@ from astropy.coordinates import get_sun
 from astroplan import Observer
 import pdb
 import math
+
 # The figure below shows the telescope limits for the Keck telescopes. 
 # In the regions where an elevation limit of ~35° is shown, 
 # the telescope hits the Nasmyth deck. Note that this is a problem in the South and West for Keck II
@@ -38,9 +39,9 @@ def keck1_rising_time(sky_coord, date_UT):
         rise_time = None
     else: #object do rise
         if obj_altaz[rising][nasmyth_platform][0].az >5.3*u.deg and obj_altaz[rising][nasmyth_platform][0].az < 146.2*u.deg:
-            rise_time = obj_altaz[rising][nasmyth_platform][0].obstime
+            rise_time = rtime(obj_altaz[rising][nasmyth_platform][0].obstime.datetime)
         else:
-            rise_time = obj_altaz[rising][general_shutter][0].obstime
+            rise_time = rtime(obj_altaz[rising][general_shutter][0].obstime.datetime)
     return rise_time
 
 def keck2_setting_time(sky_coord, date_UT):
@@ -64,37 +65,147 @@ def keck2_setting_time(sky_coord, date_UT):
         set_time = None
     else: #object sets
         if obj_altaz[setting][nasmyth_platform][0].az >185.3*u.deg and obj_altaz[setting][nasmyth_platform][0].az < 332.8*u.deg:
-            set_time = obj_altaz[setting][nasmyth_platform][0].obstime
+            set_time = rtime(obj_altaz[setting][nasmyth_platform][0].obstime.datetime)
         else:
-            set_time = obj_altaz[setting][general_shutter][0].obstime
+            set_time = rtime(obj_altaz[setting][general_shutter][0].obstime.datetime)
     return set_time
-
-
-def keck2_wrap_time(sky_coord,nightstart,nightend):
-    # Keck II Azimuth range  185.3° to 332.8° , Elevations accessible 36.8° to 89.5°°
-    # Stable guiding cannot be guaranteed for targets transiting at elevations higher than 85°.
-
-    t_altaz_start = keck.altaz(nightstart, sky_coord)
-    t_altaz_end = keck.altaz(nightend, sky_coord)
-
-    print('azimuth range %.0f-%.0f, dec %s'%(t_altaz_start.az.deg,t_altaz_end.az.deg,dec))
-    
-#keck2_wrap_time(source_coords,times['startime'],times['endtime'])
-
-def keck1_wrap_time(sky_coord,nightstart,nightend):
-    # Keck I   Azimuth range  5.3° to 146.2°   , Elevations accessible 33.3° to 88.9°
-    # Stable guiding cannot be guaranteed for targets transiting at elevations higher than 85°.
-
-
-    t_altaz_start = keck.altaz(nightstart, sky_coord)
-    t_altaz_end = keck.altaz(nightend, sky_coord)
-    print('azimuth range %.0f-%.0f, dec %s'%(t_altaz_start.az.deg,t_altaz_end.az.deg,dec))
     
 
 def rtime(astroplan_datetime):
-    # rounds astroplan datetime to nearest minute, and outputs time
+    # Rounds astroplan datetime to nearest minute by adding a timedelta minute if second >= 30
+
+    t=astroplan_datetime
+    rtime=t.replace(second=0, microsecond=0, minute=t.minute, hour=t.hour)\
+               +timedelta(minutes=t.second//30)
+    return (rtime.strftime("%H:%M"))
+
+
+def keck_wrap_time(sky_coord, date_UT):
+
+    # Technically this should be split into Keck I and Keck II
+    # Here I am ignoring the Nazymth platform 
+    # Just making sure than objects are >18 degree alt 
+    #
     
-    return()
+    date_UT = Time(date_UT)
+    utc_offset = -10*u.hour #Hawaii standard time
+    midnight = date_UT - utc_offset
+    # start_time = date_UT - utc_offset - 6*u.hour #6pm
+    # end_time =    date_UT - utc_offset + 6*u.hour #6am
+    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    observer_frame = AltAz(obstime=midnight+delta_midnight,
+                              location=keck_location)
+    
+    obj_altaz = sky_coord.transform_to(observer_frame)
+    
+    # Get Azimuth ranges for targets
+    # 0 is North, 90 is East
+    # North wrap is: 325-90
+    # South Wrap is : 90-235
+    # North or South is 235-325
+    nwrap=np.logical_or((obj_altaz.az >= 325*u.deg) & (obj_altaz.az <= 360*u.deg), (obj_altaz.az >= 0*u.deg) & (obj_altaz.az <= 90*u.deg))
+    swrap=(obj_altaz.az >= 90*u.deg) & (obj_altaz.az <= 235*u.deg)
+    nswrap=(obj_altaz.az > 235*u.deg) & (obj_altaz.az < 325*u.deg)
+    
+    # Make sure alt is greater than 18 degrees
+    notset = obj_altaz.alt > 18*u.deg #select only times where the object is setting. 
+    
+    nwrap=np.logical_and(nwrap,notset)
+    swrap=np.logical_and(swrap,notset)
+    nswrap=np.logical_and(nswrap,notset)
+    
+    if len(obj_altaz[nwrap])>0:
+     n_start=rtime(obj_altaz[nwrap].obstime[0].datetime)
+     n_end=rtime(obj_altaz[nwrap].obstime[-1].datetime)
+    if len(obj_altaz[nwrap])==0:
+      n_start,n_end=None,None
+      #print('Not in North Wrap')
+    
+    if len(obj_altaz[swrap])>0:
+     s_start=rtime(obj_altaz[swrap].obstime[0].datetime)
+     s_end=rtime(obj_altaz[swrap].obstime[-1].datetime)
+    if len(obj_altaz[swrap])==0:
+     s_start,s_end=None,None
+     #print('Not in South Wrap')
+
+    if len(obj_altaz[nswrap])>0:
+     ns_start=rtime(obj_altaz[nswrap].obstime[0].datetime)
+     ns_end=rtime(obj_altaz[nswrap].obstime[-1].datetime)
+    if len(obj_altaz[nswrap])==0:
+     #print('Not in North/South Wrap')
+     ns_start,ns_end=None,None
+    
+    if s_start==None and s_end==None and ns_start==None and ns_end==None:
+     string='N (%s-%s)'%(n_start,n_end)
+        
+    if n_start==None and n_end==None and ns_start==None and ns_end==None:
+     string='S (%s-%s)'%(s_start,s_end)
+   
+    if n_start==None and n_end==None and ns_start!=None and ns_end!=None:
+     string='S,NS (%s-%s,%s-%s)'%(s_start,s_end,ns_start,ns_end)
+        
+    if s_start==None and s_end==None and ns_start!=None and ns_end!=None:
+     string='N,NS (%s-%s,%s-%s)'%(n_start,n_end,ns_start,ns_end)
+
+    if ns_start==None and ns_end==None and n_start!=None and n_end!=None and s_start!=None and s_end!=None:
+     string='N,S (%s-%s,%s-%s)'%(n_start,n_end,s_start,s_end)
+        
+    if ns_start!=None and ns_end!=None and n_start!=None and n_end!=None and s_start!=None and s_end!=None:
+     string='N,S,N/S (%s-%s,%s-%s,%s-%s)'%(n_start,n_end,s_start,s_end,ns_start,ns_end)
+
+  
+    #return('N',n_start,n_end,'S',s_start,s_end,'N/S',ns_start,ns_end,string)
+    #print(ns_start,ns_end,n_start,n_end,s_start,s_end)
+    return(string)
+
+def moon_distance(sky_coord, date_UT,degrees=15):
+    
+    date_UT = Time(date_UT)
+    utc_offset = -10*u.hour #Hawaii standard time
+    midnight = date_UT - utc_offset
+    # start_time = date_UT - utc_offset - 6*u.hour #6pm
+    # end_time =    date_UT - utc_offset + 6*u.hour #6am
+    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    observer_frame = AltAz(obstime=midnight+delta_midnight,
+                              location=keck_location)
+    
+    obj_altaz = sky_coord.transform_to(observer_frame)
+    keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
+    moon_altaz = keck.moon_altaz(midnight+delta_midnight) 
+    
+    #moon=moon_altaz.alt> 0*u.degree
+    moon_sep = obj_altaz.separation(moon_altaz)
+    
+    moon_warning= moon_altaz[moon_sep <degrees*u.deg]
+
+    if len(moon_warning)>0:
+        return("Moon distance: %.1f deg"%(np.median(moon_sep).deg))
+    if len(moon_warning)==0:
+        return('')
+
+
+def keck_alt_warning(sky_coord, date_UT):
+    
+    date_UT = Time(date_UT)
+    utc_offset = -10*u.hour #Hawaii standard time
+    midnight = date_UT - utc_offset
+    # start_time = date_UT - utc_offset - 6*u.hour #6pm
+    # end_time =    date_UT - utc_offset + 6*u.hour #6am
+    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    observer_frame = AltAz(obstime=midnight+delta_midnight,
+                              location=keck_location)
+    obj_altaz = sky_coord.transform_to(observer_frame)
+    alt_high = obj_altaz.alt > 85*u.deg
+    
+    if len(obj_altaz[alt_high])>0:
+     alt_start=rtime(obj_altaz[alt_high].obstime[0].datetime)
+     alt_end=rtime(obj_altaz[alt_high].obstime[-1].datetime)
+     return('Unstable guiding (alt > 85 deg): %s-%s'%(alt_start,alt_end))
+    else:
+     alt_start,alt_end,str=None, None,None
+     return('')
+
+
 
 
 def NIRES_telluric_exp_time(optical_mag):
@@ -180,6 +291,124 @@ def NIRES_target_exp_time(optical_mag):
 
     return exp_time_str,exp_time_ind,dither
 
+
+def LRIS_exp_time(optical_mag):
+    optical_mag=float(optical_mag)
+    if optical_mag<13:
+        exp_time_str='20 / 4x60s'
+        exp_time_b=60
+    if 13 <= optical_mag< 14:
+        exp_time_str='20 / 4x80'
+        exp_time_b=80
+    if 14 <= optical_mag< 15:
+        exp_time_str='30 / 4x100'
+        exp_time_b=100
+    if 15 <= optical_mag< 16:
+        exp_time_str='30 / 4x120'
+        exp_time_b=120
+    if 16 <= optical_mag< 16.5:
+        exp_time_str='30 / 4x150'
+        exp_time_b=150
+    if 16.5 <= optical_mag< 17:
+        exp_time_str='30 / 4x200'
+        exp_time_b=200
+    if 17 <= optical_mag< 17.5:
+        exp_time_str='30 / 4x250'
+        exp_time_b=250
+    if 17.5 <= optical_mag< 18:
+        exp_time_str='30 / 4x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 18.0 <= optical_mag< 18.5:
+        exp_time_str='40 / 6x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 18.5 <= optical_mag< 19.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 19.0 <= optical_mag< 19.5:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 19.5 <= optical_mag< 20.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 20 <= optical_mag< 20.5:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 20.5 <= optical_mag< 21.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 21.0 <= optical_mag< 21.5:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 21.5 <= optical_mag< 22.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 22.0 <= optical_mag< 22.5:
+        exp_time_str='2100 / 3x657'
+        exp_time_b=2100
+        exp_time_r=657
+        n_r=3
+        n_b=1
+    if 22.5 <= optical_mag< 23.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 23.0 <= optical_mag< 23.5:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 23.5 <= optical_mag< 24.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 24.0 <= optical_mag< 24.5:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if 24.5 <= optical_mag< 25.0:
+        exp_time_str='40 / 8x300'
+        exp_time_b=300
+        exp_time_r=300
+    if optical_mag>= 25:
+        exp_time_str='faint do you really want to do this?'
+        exp_time_b=300
+        exp_time_r=300
+
+    return exp_time_str,exp_time_b,exp_time_r
+
+"""import sys
+if len(sys.argv) < 3:
+    print('Usage: python LRIS_exp_time.py individual_blue_exp_time #red_desired #blue_desired')
+    print('If #blue_desired not provided, defaults to 1.\n\n')
+    print('Example: python LRIS_exp_time.py 1200 2 \n--> will give you the individual exposure time for the red side if the blue side is 1x1200 sec, \nand you want to take 2 red exposures.')
+else:
+    blue_exp = int(sys.argv[1])
+    num_red = int(sys.argv[2])
+    if len(sys.argv) == 4:
+        num_blue = int(sys.argv[3])
+    else:
+        num_blue = 1
+
+    #Readout times from https://www2.keck.hawaii.edu/inst/lris/win_bin.html
+    blue_readout = 54 #s, 1x1 binning, full frame 4 amps
+    red_readout = 65 #x, Spec 2x1 2 amp
+
+    ### We want to make sure that the last frame of blue and red finish exposing at the same time so that we can slew. 
+    ###  (blue_exp + blue_readout) * num_blue - blue_readout = (red_exp + red_readout) * num_red - red_readout
+    red_exp = (((blue_exp + blue_readout)*num_blue - blue_readout) + red_readout)/num_red -red_readout
+
+    print("Appropriate exposure time for each red frame is:\n%d"%red_exp)"""
+
+
+
 # Keck I   Azimuth range  5.3° to 146.2°   , Elevations accessible 33.3° to 88.9°
 # Keck II Azimuth range  185.3° to 332.8° , Elevations accessible 36.8° to 89.5°°
 # Stable guiding cannot be guaranteed for targets transiting at elevations higher than 85°.
@@ -218,6 +447,8 @@ if __name__ == '__main__':
         utdate=args.utdate
         date = Time(utdate)-TimeDelta(1)
         astropy_utdate = Time(utdate)
+        print("User specified UT date: ",utdate)
+
     else:
         if args.instrument=='NIRES':
          date = filename.split(".")[0].split("Keck_II_")[1].split("_")[0]
@@ -229,7 +460,7 @@ if __name__ == '__main__':
 
 
     # USNO, defintion of sunset time is when the solar disk center is at -0.8333 degrees altitude
-    # to account for the solar radius and atmospheric refraction, I found -0.7 matches well with keck
+    # to account for the solar radius and atmospheric refraction, I found -0.7 matches well with keck, but this can be changed!
     times = {'utdate':utdate,
             'caldate':date,
             'sunset': keck.sun_set_time(utdate, which='next',horizon=0*u.deg,n_grid_points=200).datetime,
@@ -259,29 +490,32 @@ if __name__ == '__main__':
         }
     print('caldate  %s'%times['caldate'])
     print('utdate   %s'%times['utdate'])
-    print('sunset   %s'%times['sunset'])
-    print('etwi05   %s'%times['etwi05'])
-    print('etwi06   %s'%times['etwi06'])
-    print('etwi07   %s'%times['etwi07'])
-    print('etwi4    %s'%times['etwi4'])
-    print('etwi5    %s'%times['etwi5'])
-    print('etwi6    %s'%times['etwi6'])
-    print('etwi8    %s'%times['etwi8'])
-    print('etwi10   %s'%times['etwi10'])
-    print('etwi12   %s'%times['etwi12'])
-    print('etwi18   %s'%times['etwi18'])
-    print('midnight %s'%times['midnight'])
-    print('mtwi18   %s'%times['mtwi18'])
-    print('mtwi12   %s'%times['mtwi12'])
-    print('mtwi10   %s'%times['mtwi10'])
-    print('mtwi8    %s'%times['mtwi8'])
-    print('mtwi6    %s'%times['mtwi6'])
-    print('mtwi5    %s'%times['mtwi5'])
-    print('mtwi4    %s'%times['mtwi4'])
-    print('mtwi07   %s'%times['mtwi07'])
-    print('mtwi06   %s'%times['mtwi06'])
-    print('mtwi05   %s'%times['mtwi05'])
-    print('sunrise  %s'%times['sunrise'])
+    print('sunset   %s'%rtime(times['sunset']))
+    print('etwi05   %s'%rtime(times['etwi05']))
+    print('etwi06   %s'%rtime(times['etwi06']))
+    print('etwi07   %s'%rtime(times['etwi07']))
+    print('etwi4    %s'%rtime(times['etwi4']))
+    print('etwi5    %s'%rtime(times['etwi5']))
+    print('etwi6    %s'%rtime(times['etwi6']))
+    print('etwi8    %s'%rtime(times['etwi8']))
+    print('etwi10   %s'%rtime(times['etwi10']))
+    print('etwi12   %s'%rtime(times['etwi12']))
+    print('etwi18   %s'%rtime(times['etwi18']))
+    print('midnight %s'%rtime(times['midnight']))
+    print('mtwi18   %s'%rtime(times['mtwi18']))
+    print('mtwi12   %s'%rtime(times['mtwi12']))
+    print('mtwi10   %s'%rtime(times['mtwi10']))
+    print('mtwi8    %s'%rtime(times['mtwi8']))
+    print('mtwi6    %s'%rtime(times['mtwi6']))
+    print('mtwi5    %s'%rtime(times['mtwi5']))
+    print('mtwi4    %s'%rtime(times['mtwi4']))
+    print('mtwi07   %s'%rtime(times['mtwi07']))
+    print('mtwi06   %s'%rtime(times['mtwi06']))
+    print('mtwi05   %s'%rtime(times['mtwi05']))
+    print('sunrise  %s'%rtime(times['sunrise']))
+
+    #print('mtwi06   %s'%rtime(times['mtwi06']))
+
     
 
     # NIRES should start/end ~20 min after/before sunset/sunrise, or 5 degree
@@ -317,77 +551,94 @@ if __name__ == '__main__':
 
 
     if args.instrument=='NIRES':
-     main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \tTime(m)\tIndividual Exp\tTotal Exp(s)\tTotal Exp (min)\tSetting time(UT)\tAzimuth Range\t Wrap\n'
+     main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \tTime(m)\tIndividual Exp\tTotal Exp(s)\tTotal Exp (min)\tSetting time(UT)\tWraps \t Warnings\n'
      shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
      fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
      full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
-     
+
      if args.shalf:
       header=shalf_nires_header+main_nires_header
       out_file.write(header)
-      out_file.write(str(times['midnight'].strftime("%H:%M:%S"))+'\t'+times['mtwi18'].strftime("%H:%M:%S")+','+times['mtwi12'].strftime("%H:%M:%S")+','+times['mtwi5'].strftime("%H:%M:%S")+','+times['mtwi07'].strftime("%H:%M:%S")+'\n')
+      out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
       out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
      if args.fhalf:
       header=fhalf_nires_header+main_nires_header
       out_file.write(header)
-      out_file.write(str(times['startime'])+'\t'+str(times['endtime']))
+      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
       out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
      if not (args.fhalf or args.shalf):
       header=full_nires_header+main_nires_header
       out_file.write(header)
-      out_file.write(str(times['startime'])+'\t'+str(times['endtime']))
+      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
       out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
     if args.instrument=='LRIS':
-        # need to copy lris log...
-        main_lris_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \tTime(m)\tIndividual Exp\tTotal Exp(s)\tTotal Exp (min)\tSetting time(UT)\tAzimuth Range\t Wrap\n'
-        #shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
-        #fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
-        #full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
+     # need to copy lris log...
+     main_lris_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (b / r)\t PA \tTime(m)\tTotal Exp(s)\tTotal Exp (min)\tRising time(UT)\tAzimuth Range\t Wrap\n'
+     shalf_lris_header='Start(UT)\tEnd(18,12,8,0 deg) (UT)'
+     fhalf_lris_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
+     full_lris_header='Start(0,8,12,18 deg)(UT)\tEnd(18,12,8,0 deg) (UT)'
 
-       
-        # To do, update this with LRIS specific
-
+     if args.shalf:
+      header=shalf_lris_header+main_lris_header
+      out_file.write(header)
+      out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+ 
+     if args.fhalf:
+      header=fhalf_lris_header+main_lris_header
+      out_file.write(header)
+      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
+      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+ 
+     if not (args.fhalf or args.shalf):
+      header=full_lris_header+main_lris_header
+      out_file.write(header)
+      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
     for ind, i in enumerate(lines):
+
         if len(i.strip()) > 1:
             if i.strip()[0] != cmt : #The entire line is not commented
                 if "_S" not in i.split()[0]: #this is a target, not an offset star
-
                     split=i.split()
                     #print(len(split))                    
                     name=split[0]
                     ra = split[1]+' '+split[2]+' '+split[3]
                     dec= split[4]+' '+split[5]+' '+split[6]
-                    #print(len(split),name,ra,dec,split[7:])
+
                     ra_sheet = "'"+split[1]+':'+split[2]+':'+split[3]
                     dec_sheet= "'"+split[4]+':'+split[5]+':'+split[6]
 
                     source_coords = SkyCoord(ra = ra, dec = dec, unit = (u.hourangle, u.deg))
                     
+                    wraps=keck_wrap_time(source_coords,times['utdate'])
+                    warning_alt=keck_alt_warning(source_coords,times['utdate'])
+                    warning_moon=moon_distance(source_coords,times['utdate'],15)
+                    #print(name,ra_sheet,dec_sheet,warning_alt,warning_moon)
+
                     #t_altaz_midnight = keck.altaz(times['midnight'], source_coords)
-                    t_altaz_start = keck.altaz(times['startime'], source_coords)
-                    t_altaz_end = keck.altaz(times['endtime'], source_coords)
+                    #t_altaz_start = keck.altaz(times['startime'], source_coords)
+                    #t_altaz_end = keck.altaz(times['endtime'], source_coords)
 
-                    print('azimuth range %.0f-%.0f, dec %s'%(t_altaz_start.az.deg,t_altaz_end.az.deg,dec))
-
-                    if args.instrument=='LRIS':
-                     k1_rise=keck1_rising_time(source_coords, times['utdate'])
-                     #print(name+" K1 rising time is ", k1_rise)
-
+                    #print('azimuth range %.0f-%.0f, dec %s'%(t_altaz_start.az.deg,t_altaz_end.az.deg,dec))
+                    
+                    #print(name+" K1 rising time is ", k1_rise)
+                    #print(type(k2_set.datetime))
+                    #print(k2_set.datetime))
+                    
                     if args.instrument=='NIRES':
-                     k2_set=keck2_setting_time(source_coords, times['utdate'])
-                     #print(name+" K2 setting time is ",k2_set)
-    
+                      k2_set=keck2_setting_time(source_coords, times['utdate'])
+                      print("K2 setting time is ",k2_set)
+                      if k2_set==None:
+                        k2_set='-'
+                      #print(rtime(k2_set))
 
-                     #print(type(k2_set.datetime))
-                     #print(k2_set.datetime.strftime("%H:%M:%S"))
-
-                     if args.instrument=='NIRES':
                       if "HIP" in name:
                        vmag=split[17]
                        bmag=split[14]
@@ -397,8 +648,8 @@ if __name__ == '__main__':
                        telluric_tot='00:10:00'
                        #total_exp_time_s=exp_time*len(dither)
                        #total_exp_time_m=total_exp_time_s/60.
-                       out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%s \t %s \t \t \t %s\t %.0f-%.0f \n'%\
-                         (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,telluric_tot,exp_time,k2_set,t_altaz_start.az.deg,t_altaz_end.az.deg))
+                       out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%s \t %s \t \t \t %s\t %s \t %s \n'%\
+                         (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,telluric_tot,exp_time,k2_set,wraps,warning_alt+' '+warning_moon))
                       
                       if not "HIP" in name:
                        sn_mag=split[11].split('r=')[1]
@@ -409,8 +660,29 @@ if __name__ == '__main__':
                        total_exp_time_s=exp_time*len(dither)
                        total_exp_time_m=math.ceil(total_exp_time_s/60.)
                        time_w_overheads=total_exp_time_m+5 
-                       out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %.0f-%.0f \n'%\
-                         (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,t_altaz_start.az.deg,t_altaz_end.az.deg))
+                       out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
+                         (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
+
+
+                    if args.instrument=='LRIS':
+                     k1_rise=keck1_rising_time(source_coords, times['utdate'])
+                     print('K1 rising time is:',k1_rise)
+                     if k1_rise==None:
+                        k2_rise='-'
+                     #print(k1_rise.datetime)
+                     #print(split)
+                     rmag=split[11]
+                     rotdest=split[9]
+                     exp_time_str=LRIS_exp_time(rmag[2:])[0]
+                     exp_time_b=LRIS_exp_time(rmag[2:])[1]
+                     exp_time_r=LRIS_exp_time(rmag[2:])[2]
+                     #total_exp_time_s=exp_time*len(dither)
+                     #total_exp_time_m=math.ceil(total_exp_time_s/60.)
+                     #time_w_overheads=total_exp_time_m+5
+                     #print('%s %s %s %s %s %s %s %s %s %s'%\
+                     #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,exp_time_b,exp_time_r,rotdest,rtime(k1_rise)))
+                     #out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%s \t %s \t \t \t %s\t %.0f-%.0f \n'%\
+                     #     (name,ra_sheet,dec_sheet))
 
 
 
