@@ -556,7 +556,7 @@ if __name__ == '__main__':
     file = open(filename, 'r')
     lines = file.read().split('\n')
     out_file = open('spreadsheet_'+filename, 'w')
-
+    print("Writing to: "+'spreadsheet_'+filename)
 
     if args.instrument=='NIRES':
      main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \t Rotdest \tTime(m) w overhead\tIndividual Time(s)\tTotal Time(s)\tTotal Time (min)\tSetting time(UT)\tWraps \t Warnings\n'
@@ -642,7 +642,7 @@ if __name__ == '__main__':
                     
                     if args.instrument=='NIRES':
                       k2_set=keck2_setting_time(source_coords, times['utdate'])
-                      print("K2 setting time is ",k2_set)
+                      #print("K2 setting time is ",k2_set)
                       if k2_set==None:
                         k2_set='-'
                       #print(rtime(k2_set))
