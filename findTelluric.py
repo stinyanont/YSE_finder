@@ -6,7 +6,7 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 import sys
 
-def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 4, Vmax = 11):
+def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 6.5, Vmax = 11):
     """
     Given a source coordinates in SkyCoord format, query the Hipparcos catalog on Vizier to get the closest A0V star. 
     Return a result table with RA, Dec, Spectral type, Vmag, distance from source, and RA difference    
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                             ### FROM EXPERIENCE, closest telluric in RA is useless. Get 2 closest in distance. 
                             # best_tel_dist = tellurics[tellurics['distance'] == np.min(tellurics['distance'])][0]
                             tellurics.sort('distance')
-                            min_RA_sep = 10 #arcmin
+                            min_RA_sep = 0.01 #arcmin
                             good_RA_diff = np.logical_and(tellurics["abs_dRA"] > min_RA_sep/60*15 , \
                                                             tellurics["abs_dRA"] < 1*15)
                             #ra difference bigger than 10 mins, smaller than an hour

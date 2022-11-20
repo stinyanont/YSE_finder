@@ -33,15 +33,19 @@ def keck1_rising_time(sky_coord, date_UT):
 
     nasmyth_platform = obj_altaz[rising].alt > 33.3*u.deg #time steps where object could be below the nasmyth platform, K1
     general_shutter  = obj_altaz[rising].alt > 18*u.deg
-
+    # print(np.sum(nasmyth_platform), np.sum(general_shutter))
     #Object never rises
+    #Need to be more check cases here. 
     if np.sum(general_shutter) == 0:
         rise_time = None
     else: #object do rise
-        if obj_altaz[rising][nasmyth_platform][0].az >5.3*u.deg and obj_altaz[rising][nasmyth_platform][0].az < 146.2*u.deg:
+        # print('foo ', obj_altaz[rising][nasmyth_platform][0])
+        if (len(obj_altaz[rising][nasmyth_platform]) > 0) and (obj_altaz[rising][nasmyth_platform][0].az >5.3*u.deg and obj_altaz[rising][nasmyth_platform][0].az < 146.2*u.deg):
             rise_time = rtime(obj_altaz[rising][nasmyth_platform][0].obstime.datetime)
-        else:
+        elif len(obj_altaz[rising][general_shutter]) > 0:
             rise_time = rtime(obj_altaz[rising][general_shutter][0].obstime.datetime)
+        else:
+            rise_time = None
     return rise_time
 
 def keck2_setting_time(sky_coord, date_UT):
@@ -75,9 +79,9 @@ def rtime(astroplan_datetime):
     # Rounds astroplan datetime to nearest minute by adding a timedelta minute if second >= 30
 
     t=astroplan_datetime
-    rtime=t.replace(second=0, microsecond=0, minute=t.minute, hour=t.hour)\
+    risetime=t.replace(second=0, microsecond=0, minute=t.minute, hour=t.hour)\
                +timedelta(minutes=t.second//30)
-    return (rtime.strftime("%H:%M"))
+    return (risetime.strftime("%H:%M"))
 
 
 def keck_wrap_time(sky_coord, date_UT):
@@ -213,33 +217,37 @@ def NIRES_telluric_exp_time(optical_mag):
     if optical_mag<7:
         exp_time_str='4x2s (bright, keep off slit centre)'
         exp_time_ind=2
-    if 7.0 <= optical_mag< 7.5:
+    elif 7.0 <= optical_mag< 7.5:
         exp_time_str='2 / 4x2'
         exp_time_ind=2
-    if 7.5 <= optical_mag< 8:
+    elif 7.5 <= optical_mag< 8:
         exp_time_str='2 / 4x2'
         exp_time_ind=2
-    if 8 <= optical_mag< 8.5:
+    elif 8 <= optical_mag< 8.5:
         exp_time_str='2 / 4x3'
         exp_time_ind=3
-    if 8.5 <= optical_mag< 9:
+    elif 8.5 <= optical_mag< 9:
         exp_time_str='2 / 4x5'
         exp_time_ind=5
-    if 9 <= optical_mag< 9.5:
+    elif 9 <= optical_mag< 9.5:
         exp_time_str='3 / 4x10'
         exp_time_ind=10
-    if 9.5 <= optical_mag< 10:
+    elif 9.5 <= optical_mag< 10:
         exp_time_str='3 / 4x15'
         exp_time_ind=15
-    if 10 <= optical_mag< 11:
+    elif 10 <= optical_mag< 11:
         exp_time_str='3 / 4x20'
         exp_time_ind=20
-    if 11 <= optical_mag< 12:
+    elif 11 <= optical_mag< 12:
         exp_time_str='3 / 4x30'
         exp_time_ind=30
-    if optical_mag>= 12:
+    elif optical_mag>= 12:
         exp_time_str='faint telluric, pick brighter one'
         exp_time_ind=60
+    else:
+        exp_time_str='telluric does not have V mag. Check.'
+        exp_time_ind=60        
+    # print(optical_mag, exp_time_str, exp_time_ind)
     return exp_time_str,exp_time_ind
 
 def NIRES_target_exp_time(optical_mag):
@@ -674,6 +682,7 @@ if __name__ == '__main__':
 
 
                     if args.instrument=='LRIS':
+                     print(name)
                      k1_rise=keck1_rising_time(source_coords, times['utdate'])
                      #print('K1 rising time is:',k1_rise)
                      if k1_rise==None:

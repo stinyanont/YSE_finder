@@ -85,6 +85,7 @@ if __name__ == '__main__':
         out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
     else:
         out_file = open(filename.split('.')[0]+'_final.txt', "w")
+    out_file.close()
     ######Now, call finder_chart.py
     for i in range(len(targets)):
         # time.sleep(5)
@@ -171,7 +172,13 @@ if __name__ == '__main__':
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png', server = server,
                             use_skymapper = args.skymapper)
             print(starlist_entry)
+            ###Open the file to write to. 
+            if args.telescope == 'NIRES':
+                out_file = open(filename.split('.')[0]+'_with_offsets.txt', "a")
+            else:
+                out_file = open(filename.split('.')[0]+'_final.txt', "a")
             out_file.write(starlist_entry) #write as we go
+            out_file.close() #this way things get saved.
             all_starlist += starlist_entry
             ###If requesting rotated finder chart
             if args.rotate and ((host_ra is not None) and (host_dec is not None)):
