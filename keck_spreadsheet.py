@@ -444,7 +444,7 @@ if __name__ == '__main__':
     parser.add_argument('--utdate', dest='utdate',type = Time,help = 'fmt: yyyy-mm-dd. Date of observations. Superseeds taking the time from the filename.')
     parser.add_argument("--fhalf", action="store_true",help="first half night")
     parser.add_argument("--shalf", action="store_true",help="second half night")
-    parser.add_argument("--comments", "-c", help="Original YSE PZ target list with comments")
+    parser.add_argument("--comments", "-c", help="Original YSE PZ target list with comments", default=None)
 
     args = parser.parse_args()
 
@@ -454,6 +454,20 @@ if __name__ == '__main__':
     
     cmt='#'
 
+    #If comments are given, open that file and store comments and SN name
+    cmt_dict = {}
+    if args.comments is not None:
+        comments = open(args.comments, 'r')
+        for line in comments:
+            if line[0] != '!':
+                sn_name = line.split(' ')[0]
+                comment = (line.split('comment = ')[1]).replace("\n","")
+                # print(sn_name, comment)
+                if sn_name in cmt_dict.keys():
+                    cmt_dict[sn_name] = cmt_dict[sn_name]+' '+comment
+                else:
+                    cmt_dict[sn_name] = comment
+        print(cmt_dict)
     #keck = Observer.at_site("Keck")
     keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
     keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
@@ -678,8 +692,12 @@ if __name__ == '__main__':
                             total_exp_time_s=exp_time*len(dither)
                             total_exp_time_m=math.ceil(total_exp_time_s/60.)
                             time_w_overheads=total_exp_time_m+7 # increased overheads to 7 minutes per target 
-                            out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
-                                (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
+                            if name in cmt_dict.keys():
+                                out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \t %s \n'%\
+                                    (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon, cmt_dict[name]))
+                            else:
+                                out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
+                                    (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
 
 
                     if args.instrument=='LRIS':
@@ -704,8 +722,12 @@ if __name__ == '__main__':
 
                         #print('\t\t%s \t%s \t%s \t%s \t%s \t%.0f\t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
                         #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
-                        out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
-                            (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
+                        if name in cmt_dict.keys():
+                            out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \t %s \n'%\
+                                (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon, cmt_dict[name]))
+                        else:
+                            out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
+                                (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
 
 
 
