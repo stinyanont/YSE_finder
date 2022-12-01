@@ -23,7 +23,7 @@ def keck1_rising_time(sky_coord, date_UT):
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
-    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
     observer_frame = AltAz(obstime=midnight+delta_midnight,
                               location=keck_location)
 
@@ -53,7 +53,7 @@ def keck2_setting_time(sky_coord, date_UT):
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
-    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
     observer_frame = AltAz(obstime=midnight+delta_midnight,
                               location=keck_location)
 
@@ -96,7 +96,7 @@ def keck_wrap_time(sky_coord, date_UT):
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
-    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
     observer_frame = AltAz(obstime=midnight+delta_midnight,
                               location=keck_location)
     
@@ -169,7 +169,7 @@ def moon_distance(sky_coord, date_UT,degrees=15):
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
-    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
     observer_frame = AltAz(obstime=midnight+delta_midnight,
                               location=keck_location)
     
@@ -195,7 +195,7 @@ def keck_alt_warning(sky_coord, date_UT):
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
-    delta_midnight = np.linspace(-6, 6, 720*2)*u.hour #one per 0.5 minute
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
     observer_frame = AltAz(obstime=midnight+delta_midnight,
                               location=keck_location)
     obj_altaz = sky_coord.transform_to(observer_frame)

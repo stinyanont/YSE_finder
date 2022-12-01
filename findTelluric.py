@@ -18,7 +18,12 @@ def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 6.5, Vmax =
     #query. Use twice the max distance and add flag if the closest one is too far
     result = hip_viz.query_region(coords, radius=2*max_distance*u.deg, catalog='I/239')
     # try:
-    a0v_res = result[0] #[0] is Hipparcos; [1] is Tycho
+    print(result)
+    try:
+        a0v_res = result[0] #[0] is Hipparcos; [1] is Tycho
+    except:
+        result = hip_viz.query_region(coords, radius=4*max_distance*u.deg, catalog='I/239')
+        a0v_res = result[0]
 
     #Get B mag from Simbad, also check spectral type
     Simbad.add_votable_fields("flux(B)")
@@ -116,6 +121,7 @@ if __name__ == "__main__":
                             ra = splitted[1]+' '+splitted[2]+' '+splitted[3]
                             dec = splitted[4]+' '+splitted[5]+' '+splitted[6]
                             source_coords = SkyCoord(ra = ra, dec = dec, unit = (u.hourangle, u.deg))
+                        print("Getting telluric for %s"%splitted[0])
                         tellurics = getTelluric(source_coords)
                         #Write source to output file
                         if outformat == 'irtf':
@@ -142,8 +148,8 @@ if __name__ == "__main__":
                             tellurics.sort('distance')
                             min_RA_sep = 0.01 #arcmin
                             good_RA_diff = np.logical_and(tellurics["abs_dRA"] > min_RA_sep/60*15 , \
-                                                            tellurics["abs_dRA"] < 1*15)
-                            #ra difference bigger than 10 mins, smaller than an hour
+                                                            tellurics["abs_dRA"] < 1.2*15)
+                            #ra difference bigger than 10 mins, smaller than 1.2 hour
                             # print(tellurics[good_RA_diff])
                             ###########################################TO DO, MAKE SURE YOU ALWAYS GET ONE TO EAST AND ONE TO WEST##################
                             if np.sum(good_RA_diff.astype(int)) > 2:
