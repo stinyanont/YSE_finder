@@ -444,6 +444,7 @@ if __name__ == '__main__':
     parser.add_argument('--utdate', dest='utdate',type = Time,help = 'fmt: yyyy-mm-dd. Date of observations. Superseeds taking the time from the filename.')
     parser.add_argument("--fhalf", action="store_true",help="first half night")
     parser.add_argument("--shalf", action="store_true",help="second half night")
+    parser.add_argument("--comments", "-c", help="Original YSE PZ target list with comments")
 
     args = parser.parse_args()
 
@@ -467,11 +468,11 @@ if __name__ == '__main__':
 
     else:
         if args.instrument=='NIRES':
-         date = filename.split(".")[0].split("Keck_II_")[1].split("_")[0]
-         utdate = Time(date)+TimeDelta(1)
+            date = filename.split(".")[0].split("Keck_II_")[1].split("_")[0]
+            utdate = Time(date)+TimeDelta(1)
         if args.instrument=='LRIS':
-         date = filename.split(".")[0].split("Keck_I_")[1].split("_")[0]
-         utdate = Time(date)+TimeDelta(1)
+            date = filename.split(".")[0].split("Keck_I_")[1].split("_")[0]
+            utdate = Time(date)+TimeDelta(1)
         print("Using UT date from the filename: ",utdate)
 
 
@@ -567,54 +568,54 @@ if __name__ == '__main__':
     print("Writing to: "+'spreadsheet_'+filename)
 
     if args.instrument=='NIRES':
-     main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \t Rotdest \tTime(m) w overhead\tIndividual Time(s)\tTotal Time(s)\tTotal Time (min)\tSetting time(UT)\tWraps \t Warnings\n'
-     shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
-     fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
-     full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
+        main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \t Rotdest \tTime(m) w overhead\tIndividual Time(s)\tTotal Time(s)\tTotal Time (min)\tSetting time(UT)\tWraps \t Warnings\n'
+        shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
+        fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
+        full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
 
-     if args.shalf:
-      header=shalf_nires_header+main_nires_header
-      out_file.write(header)
-      out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if args.shalf:
+            header=shalf_nires_header+main_nires_header
+            out_file.write(header)
+            out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
-     if args.fhalf:
-      header=fhalf_nires_header+main_nires_header
-      out_file.write(header)
-      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if args.fhalf:
+            header=fhalf_nires_header+main_nires_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
-     if not (args.fhalf or args.shalf):
-      header=full_nires_header+main_nires_header
-      out_file.write(header)
-      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if not (args.fhalf or args.shalf):
+            header=full_nires_header+main_nires_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
     if args.instrument=='LRIS':
      # need to copy lris log...
-     main_lris_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (b / r)\t Rotdest \tTime(m) w overhead\tTotal Time(s)\tTotal Time(min)\tRising time(UT)\tWraps\t Warnings\n'
-     shalf_lris_header='Start(UT)\tEnd(18,12,8,0 deg) (UT)'
-     fhalf_lris_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
-     full_lris_header='Start(0,8,12,18 deg)(UT)\tEnd(18,12,8,0 deg) (UT)'
+        main_lris_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (b / r)\t Rotdest \tTime(m) w overhead\tTotal Time(s)\tTotal Time(min)\tRising time(UT)\tWraps\t Warnings\n'
+        shalf_lris_header='Start(UT)\tEnd(18,12,8,0 deg) (UT)'
+        fhalf_lris_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
+        full_lris_header='Start(0,8,12,18 deg)(UT)\tEnd(18,12,8,0 deg) (UT)'
 
-     if args.shalf:
-      header=shalf_lris_header+main_lris_header
-      out_file.write(header)
-      out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if args.shalf:
+            header=shalf_lris_header+main_lris_header
+            out_file.write(header)
+            out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
-     if args.fhalf:
-      header=fhalf_lris_header+main_lris_header
-      out_file.write(header)
-      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if args.fhalf:
+            header=fhalf_lris_header+main_lris_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
-     if not (args.fhalf or args.shalf):
-      header=full_lris_header+main_lris_header
-      out_file.write(header)
-      out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
-      out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        if not (args.fhalf or args.shalf):
+            header=full_lris_header+main_lris_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
     for ind, i in enumerate(lines):
@@ -649,62 +650,62 @@ if __name__ == '__main__':
                     #print(k2_set.datetime))
                     
                     if args.instrument=='NIRES':
-                      k2_set=keck2_setting_time(source_coords, times['utdate'])
-                      #print("K2 setting time is ",k2_set)
-                      if k2_set==None:
-                        k2_set='-'
-                      #print(rtime(k2_set))
+                        k2_set=keck2_setting_time(source_coords, times['utdate'])
+                        #print("K2 setting time is ",k2_set)
+                        if k2_set==None:
+                            k2_set='-'
+                        #print(rtime(k2_set))
 
-                      if "HIP" in name:
-                       vmag=split[17]
-                       bmag=split[14]
-                       dither='ABBA'
-                       exp_time_str=NIRES_telluric_exp_time(vmag)[0]
-                       exp_time=NIRES_telluric_exp_time(vmag)[1]
-                       telluric_tot='00:10:00'
-                       rotdest=float(split[9][8:])
-                       #total_exp_time_s=exp_time*len(dither)
-                       #total_exp_time_m=total_exp_time_s/60.
-                       out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%.0f\t%s \t %s \t \t \t %s\t %s \t %s \n'%\
-                         (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,rotdest,telluric_tot,exp_time,k2_set,wraps,warning_alt+' '+warning_moon))
+                        if "HIP" in name:
+                            vmag=split[17]
+                            bmag=split[14]
+                            dither='ABBA'
+                            exp_time_str=NIRES_telluric_exp_time(vmag)[0]
+                            exp_time=NIRES_telluric_exp_time(vmag)[1]
+                            telluric_tot='00:10:00'
+                            rotdest=float(split[9][8:])
+                            #total_exp_time_s=exp_time*len(dither)
+                            #total_exp_time_m=total_exp_time_s/60.
+                            out_file.write('\t\t %s \t %s \t %s \t %s,%s\t%s\t%s\t%.0f\t%s \t %s \t \t \t %s\t %s \t %s \n'%\
+                                (name,ra_sheet,dec_sheet,bmag,vmag,exp_time_str,dither,rotdest,telluric_tot,exp_time,k2_set,wraps,warning_alt+' '+warning_moon))
                       
-                      if not "HIP" in name:
-                       sn_mag=split[11].split('r=')[1]
-                       exp_time_str=NIRES_target_exp_time(sn_mag)[0]
-                       exp_time=NIRES_target_exp_time(sn_mag)[1]
-                       dither=NIRES_target_exp_time(sn_mag)[2]
-                       rotdest=float(split[9][8:])
-                       total_exp_time_s=exp_time*len(dither)
-                       total_exp_time_m=math.ceil(total_exp_time_s/60.)
-                       time_w_overheads=total_exp_time_m+7 # increased overheads to 7 minutes per target 
-                       out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
-                         (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
+                        if not "HIP" in name:
+                            sn_mag=split[11].split('r=')[1]
+                            exp_time_str=NIRES_target_exp_time(sn_mag)[0]
+                            exp_time=NIRES_target_exp_time(sn_mag)[1]
+                            dither=NIRES_target_exp_time(sn_mag)[2]
+                            rotdest=float(split[9][8:])
+                            total_exp_time_s=exp_time*len(dither)
+                            total_exp_time_m=math.ceil(total_exp_time_s/60.)
+                            time_w_overheads=total_exp_time_m+7 # increased overheads to 7 minutes per target 
+                            out_file.write('\t\t%s\t%s\t%s\t%s \t %s \t %s \t %.0f \t 00:%s:00 \t %s \t %s \t %.1f \t %s \t %s \t %s \n'%\
+                                (name,ra_sheet,dec_sheet,sn_mag,exp_time_str,dither,rotdest,time_w_overheads,exp_time,total_exp_time_s,total_exp_time_m,k2_set,wraps,warning_alt+' '+warning_moon))
 
 
                     if args.instrument=='LRIS':
-                     print(name)
-                     k1_rise=keck1_rising_time(source_coords, times['utdate'])
-                     #print('K1 rising time is:',k1_rise)
-                     if k1_rise==None:
-                        k2_rise='-'
+                        print(name) 
+                        k1_rise=keck1_rising_time(source_coords, times['utdate'])
+                        #print('K1 rising time is:',k1_rise)
+                        if k1_rise==None:
+                            k2_rise='-'
 
-                     rmag=split[11]
-                     rotdest=float(split[9][8:])
-                     lris_et=LRIS_exp_time(rmag[2:])
-                     exp_time_str=lris_et[0]
-                     exp_time_b=lris_et[1]
-                     exp_time_r=lris_et[2]
-                     n_b=lris_et[3]
-                     n_r=lris_et[4]
+                        rmag=split[11]
+                        rotdest=float(split[9][8:])
+                        lris_et=LRIS_exp_time(rmag[2:])
+                        exp_time_str=lris_et[0]
+                        exp_time_b=lris_et[1]
+                        exp_time_r=lris_et[2]
+                        n_b=lris_et[3]
+                        n_r=lris_et[4]
 
-                     total_exp_time_s=exp_time_b*n_b
-                     total_exp_time_m=math.ceil(total_exp_time_s/60.)
-                     time_w_overheads=(total_exp_time_m)+5 
+                        total_exp_time_s=exp_time_b*n_b
+                        total_exp_time_m=math.ceil(total_exp_time_s/60.)
+                        time_w_overheads=(total_exp_time_m)+5 
 
-                     #print('\t\t%s \t%s \t%s \t%s \t%s \t%.0f\t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
-                     #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
-                     out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
-                          (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
+                        #print('\t\t%s \t%s \t%s \t%s \t%s \t%.0f\t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
+                        #     (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
+                        out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
+                            (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
 
 
 
