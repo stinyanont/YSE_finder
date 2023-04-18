@@ -546,12 +546,15 @@ if __name__ == '__main__':
         if args.instrument=='NIRES':
             date = filename.split(".")[0].split("Keck_II_-_NIRES_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
+            
         if args.instrument=='LRIS':
             date = filename.split(".")[0].split("Keck_I_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
+
         if args.instrument=='ESI':
             date = filename.split(".")[0].split("Keck_II_-_ESI_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
+
         print("Using UT date from the filename: ",utdate)
 
 
@@ -647,7 +650,7 @@ if __name__ == '__main__':
     if args.instrument=='NIRES':
         main_nires_header='\tName\tRa\tDec\tMag (B,V)\t Exposure seq (svc/spec)\t Dither \t Rotdest \tTime(m) w overhead\tIndividual Time(s)\tTotal Time(s)\tTotal Time (min)\tSetting time(UT)\tWraps \t Warnings\n'
         shalf_nires_header='Start(UT)\tEnd(18,12,5,0 deg) (UT)'
-        fhalf_nires_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
+        fhalf_nires_header='Start(0,5,12,18 deg)(UT)\tEnd (UT)'
         full_nires_header='Start(0,5,12,18 deg)(UT)\tEnd(18,12,5,0 deg) (UT)'
 
         if args.shalf:
@@ -817,8 +820,6 @@ if __name__ == '__main__':
                             out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
                                 (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
 
-
-
                     if args.instrument=='ESI':
                         print(name) 
                         k2_set=keck2_setting_time(source_coords, times['utdate'])
@@ -841,7 +842,6 @@ if __name__ == '__main__':
                         else:
                             out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t 00:%s:00 \t%s \t%s \t%s \n'%\
                                 (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,time_w_overheads,k2_set,wraps,warning_alt+' '+warning_moon))
-
 
 
 

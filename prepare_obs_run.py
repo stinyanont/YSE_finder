@@ -14,6 +14,8 @@ import numpy as np
 import os
 import time
 import pandas as pd
+from PIL import Image
+
 
 from finder_chart import get_finder, get_host_PA_and_sep
 
@@ -49,12 +51,17 @@ if __name__ == '__main__':
     parser.add_argument("--dss", action="store_true",
                     help="Use DSS instead of PS1")
 
+    parser.add_argument("--ysepz", action='store_true',
+                    help="Open YSE PZ page for all transients in the file.")
+
     args = parser.parse_args()
     # print(args.dss)
     #Check if correct number of arguments are given
     # if len(sys.argv) != 2:
     # 	print ("Usage: prepare_obs_run.py target_list_filename")
     # 	sys.exit()
+    if args.telescope == 'LRIS':
+        args.telescope = 'Keck'
 
     # filename = sys.argv[1]
     filename = args.filename
@@ -66,6 +73,18 @@ if __name__ == '__main__':
     targets=targets.drop_duplicates()
 
     names = np.array(targets[0])
+
+    if args.ysepz:
+        for i in names:
+            try:
+                if sys.platform == "darwin":
+                    os.system("open https://ziggy.ucolick.org/yse/transient_detail/%s/"%i)
+                elif (sys.platform == "linux") or (sys.platform == "linux2"):
+                    os.system("xdg-open https://ziggy.ucolick.org/yse/transient_detail/%s/"%i)
+                else:
+                    os.system("open https://ziggy.ucolick.org/yse/transient_detail/%s/"%i)
+            except:
+                print("I tried, and I failed. The link is https://ziggy.ucolick.org/yse/transient_detail/%s/"%i)
 
     RA = np.array([str(x[1]) + ':' +str(x[2]) +':' + str(x[3]) for i,x in targets.iterrows()])
     Dec = np.array([str(x[4]) + ':' +str(x[5]) +':' + str(x[6]) for i,x in targets.iterrows()])
@@ -83,6 +102,7 @@ if __name__ == '__main__':
         out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
     else:
         out_file = open(filename.split('.')[0]+'_final.txt', "w")
+    out_file.close()
     ######Now, call finder_chart.py
     for i in range(len(targets)):
         # time.sleep(5)
@@ -113,7 +133,7 @@ if __name__ == '__main__':
             #By default, get 3 offset stars
             num_offset_stars = 3
             # print(host_ra, host_dec)
-            if args.telescope == 'Keck':
+            if args.telescope == 'Keck' or args.telescope == 'LRIS':
                 finder_size = 3/60 #3 arcmin, LRIS, this is in degree
                 max_separation = 5*60 #5 arcmin, LRIS, this is in arcsec. Don't ask why.
                 min_mag = 10
@@ -169,7 +189,13 @@ if __name__ == '__main__':
                             starlist=None, print_starlist = False,  return_starlist = True, debug = args.debug, output_format='png', server = server,
                             use_skymapper = args.skymapper)
             print(starlist_entry)
+            ###Open the file to write to. 
+            if args.telescope == 'NIRES':
+                out_file = open(filename.split('.')[0]+'_with_offsets.txt', "a")
+            else:
+                out_file = open(filename.split('.')[0]+'_final.txt', "a")
             out_file.write(starlist_entry) #write as we go
+            out_file.close() #this way things get saved.
             all_starlist += starlist_entry
             ###If requesting rotated finder chart
             if args.rotate and ((host_ra is not None) and (host_dec is not None)):
@@ -181,7 +207,7 @@ if __name__ == '__main__':
                     im = Image.open(finder_name)
                     im_rotate=im.rotate(finder_rot, resample=Image.BICUBIC, expand = True,fillcolor=(255,255,255))
                     im_rotate.save(rotated_finder,dpi=(400,400))
-                    #os.system('convert %s -virtual-pixel white +distort SRT %.2f %s'%(finder_name, host_pa+pa_offset, rotated_finder))
+                #os.system('convert %s -virtual-pixel white +distort SRT %.2f %s'%(finder_name, host_pa+pa_offset, rotated_finder))
                 except:
                     print("Check if PIL library is installed.")
 
