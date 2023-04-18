@@ -393,12 +393,74 @@ def LRIS_exp_time(optical_mag):
         n_r=6
         n_b=2
     if optical_mag>= 25:
-        exp_time_str=''
+        exp_time_str='super faint, probably cannot do it'
         exp_time_b=''
         exp_time_r=''
         n_r=''
         n_b=''
-    return exp_time_str,exp_time_b,exp_time_r,n_b,n_r
+    return exp_time_str,exp_time_b,n_b
+
+
+def ESI_exp_time(optical_mag):
+    optical_mag=float(optical_mag)
+    if optical_mag<12.5:
+        exp_time_str='100'
+        exp_time_b=100
+        n_b=1
+    if 12.5 <= optical_mag< 14.5:
+        exp_time_str='120'
+        exp_time_b=120
+        n_b=1
+    if 14.5 <= optical_mag< 16.5:
+        exp_time_str='250'
+        exp_time_b=250
+        n_b=1
+    if 16.5 <= optical_mag< 17.5:
+        exp_time_str='300'
+        exp_time_b=300
+        n_b=1
+    if 17.5 <= optical_mag< 18.5:
+        exp_time_str='600'
+        exp_time_b=600
+        n_b=1
+    if 18.5 <= optical_mag< 19.0:
+        exp_time_str='900'
+        exp_time_b=900
+        n_b=1
+    if 19.0 <= optical_mag< 19.5:
+        exp_time_str='1000'
+        exp_time_b=1000
+        n_b=1
+    if 19.5 <= optical_mag< 20.0:
+        exp_time_str='1100'
+        exp_time_b=1100
+        n_b=1
+    if 20.0 <= optical_mag< 21.0:
+        exp_time_str='1200'
+        exp_time_b=1200
+        n_b=1
+    if 21.0 <= optical_mag< 22.0:
+        exp_time_str='1800'
+        exp_time_b=1800
+        n_b=1
+    if 22.0 <= optical_mag< 22.5:
+        exp_time_str='2x1000'
+        exp_time_b=2100
+        n_b=1
+    if 22.5 <= optical_mag< 23.0:
+        exp_time_str='2x1200'
+        exp_time_b=1200
+        n_b=2
+    if 23 <= optical_mag< 23.5:
+        exp_time_str='2x1400'
+        exp_time_b=1400
+        n_b=2
+    if optical_mag>= 23.5:
+        exp_time_str='super faint, probably cannot do it'
+        exp_time_b=0
+        n_b=0
+    return exp_time_str,exp_time_b,n_b
+
 
 """import sys
 if len(sys.argv) < 3:
@@ -439,8 +501,8 @@ if __name__ == '__main__':
             
         ''', formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument('filename',help = 'Final LRIS or NIRES target list.')
-    parser.add_argument('instrument',help = 'Instrument. Options: LRIS, NIRES')
+    parser.add_argument('filename',help = 'Final LRIS, NIRES or ESI target list.')
+    parser.add_argument('instrument',help = 'Instrument. Options: LRIS, NIRES, ESI')
     parser.add_argument('--utdate', dest='utdate',type = Time,help = 'fmt: yyyy-mm-dd. Date of observations. Superseeds taking the time from the filename.')
     parser.add_argument("--fhalf", action="store_true",help="first half night")
     parser.add_argument("--shalf", action="store_true",help="second half night")
@@ -482,11 +544,17 @@ if __name__ == '__main__':
 
     else:
         if args.instrument=='NIRES':
-            date = filename.split(".")[0].split("Keck_II_")[1].split("_")[0]
+            date = filename.split(".")[0].split("Keck_II_-_NIRES_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
+            
         if args.instrument=='LRIS':
             date = filename.split(".")[0].split("Keck_I_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
+
+        if args.instrument=='ESI':
+            date = filename.split(".")[0].split("Keck_II_-_ESI_")[1].split("_")[0]
+            utdate = Time(date)+TimeDelta(1)
+
         print("Using UT date from the filename: ",utdate)
 
 
@@ -547,8 +615,6 @@ if __name__ == '__main__':
 
     #print('mtwi06   %s'%rtime(times['mtwi06']))
 
-    
-
     # NIRES should start/end ~20 min after/before sunset/sunrise, or 5 degree
     if args.instrument=='NIRES':
         if args.fhalf:
@@ -563,7 +629,7 @@ if __name__ == '__main__':
             times.update({'endtime':times['mtwi5']})
 
     # LRIS can start at like 8 degree ish
-    if args.instrument=='LRIS':
+    if args.instrument=='LRIS' or args.instrument=='ESI':
         if args.fhalf:
             times.update({'startime':times['etwi8']})
             times.update({'endtime':times['midnight']})
@@ -622,13 +688,38 @@ if __name__ == '__main__':
         if args.fhalf:
             header=fhalf_lris_header+main_lris_header
             out_file.write(header)
-            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['midnight'])+'\n')
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['midnight'])+'\n')
             out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
  
         if not (args.fhalf or args.shalf):
             header=full_lris_header+main_lris_header
             out_file.write(header)
-            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+
+    if args.instrument=='ESI':
+     # need to copy lris log...
+        main_esi_header='\tName\tRa\tDec\tMag (r)\t Exposure seq (s) \t Time(m) w overhead \t Setting time(UT)\tWraps\t Warnings \t Comments\n'
+        shalf_esi_header='Start(UT)\tEnd(18,12,8,0 deg) (UT)'
+        fhalf_esi_header='Start(0,8,12,18 deg)(UT)\tEnd (UT)'
+        full_esi_header='Start(0,8,12,18 deg)(UT)\tEnd(18,12,8,0 deg) (UT)'
+
+        if args.shalf:
+            header=shalf_esi_header+main_esi_header
+            out_file.write(header)
+            out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+ 
+        if args.fhalf:
+            header=fhalf_esi_header+main_esi_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['midnight'])+'\n')
+            out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+ 
+        if not (args.fhalf or args.shalf):
+            header=full_esi_header+main_esi_header
+            out_file.write(header)
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
             out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
@@ -728,6 +819,30 @@ if __name__ == '__main__':
                         else:
                             out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t %.0f \t 00:%s:00 \t%s \t%s \t%s \t%s \t%s \n'%\
                                 (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,rotdest,time_w_overheads,total_exp_time_s,total_exp_time_m,k1_rise,wraps,warning_alt+' '+warning_moon))
+
+                    if args.instrument=='ESI':
+                        print(name) 
+                        k2_set=keck2_setting_time(source_coords, times['utdate'])
+                        #print("K2 setting time is ",k2_set)
+                        if k2_set==None:
+                            k2_set='-'
+                        rmag=split[9]
+                        esi_et=ESI_exp_time(rmag[2:])
+                        exp_time_str=esi_et[0]
+                        exp_time_b=esi_et[1]
+                        n_b=esi_et[2]
+
+                        total_exp_time_s=exp_time_b*n_b
+                        total_exp_time_m=math.ceil(total_exp_time_s/60.)
+                        time_w_overheads=(total_exp_time_m)+5 
+
+                        if name in cmt_dict.keys():
+                            out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t 00:%s:00 \t%s \t%s \t%s \t %s \n'%\
+                                (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,time_w_overheads,k2_set,wraps,warning_alt+' '+warning_moon, cmt_dict[name]))
+                        else:
+                            out_file.write('\t\t%s \t%s \t%s \t%s \t%s \t 00:%s:00 \t%s \t%s \t%s \n'%\
+                                (name,ra_sheet,dec_sheet,rmag[2:],exp_time_str,time_w_overheads,k2_set,wraps,warning_alt+' '+warning_moon))
+
 
 
 
