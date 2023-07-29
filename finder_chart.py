@@ -108,7 +108,7 @@ def query_sky_mapper_catalogue(ra, dec, radius_deg, minmag=10, maxmag=18.5):
     mask = (catalog["class_star"]>0.7) * (catalog["ngood"] >5)  * (catalog['r_psf']>minmag) * (catalog['r_psf']<maxmag)
     catalog = catalog[mask]
     
-    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", np.float)])
+    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", float)])
     newcat["ra"] = catalog["raj2000"]
     newcat["dec"] = catalog["dej2000"]
     newcat["mag"] = catalog["r_psf"]
@@ -152,7 +152,7 @@ def query_ps1_catalogue(ra, dec, radius_deg, minmag=10, maxmag=18.5, debug = Fal
     catalog = catalog[mask]
 
     # print(catalog.colnames)
-    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", np.float)])
+    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", float)])
     newcat["ra"] = catalog["RaMean"]
     newcat["dec"] = catalog["DecMean"]
     newcat["mag"] = catalog["rMeanPSFMag"]
@@ -370,7 +370,7 @@ def query_ps1_new_mast(ra, dec, radius_deg, minmag=10, maxmag=18.5,debug = False
     catalog = catalog[mask]
 
     # print(catalog.colnames)
-    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", np.float)])
+    newcat = np.zeros(len(catalog), dtype=[("ra", np.double), ("dec", np.double), ("mag", float)])
     newcat["ra"] = catalog["raMean"]
     newcat["dec"] = catalog["decMean"]
     newcat["mag"] = catalog["rMeanPSFMag"]
@@ -700,15 +700,15 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     ###Now support any provided number of offset stars
     ref_pix = []
     for i in range(num_offset_stars):
-        ref_pix += [wcs.wcs_world2pix(np.array([[catalog["ra"][i], catalog["dec"][i]]], np.float_), 1)]
+        ref_pix += [wcs.wcs_world2pix(np.array([[catalog["ra"][i], catalog["dec"][i]]], float), 1)]
 
     ###Get pixel coordinates of the target
-    target_pix = wcs.wcs_world2pix([(np.array([ra,dec], np.float_))], 1)
+    target_pix = wcs.wcs_world2pix([(np.array([ra,dec], float))], 1)
 
     ###Get pixel coordinates of the host (if not None)
     # print(host_ra, host_dec)
     if (host_ra is not None) and (host_dec is not None):
-        host_pix = wcs.wcs_world2pix([(np.array([host_ra,host_dec], np.float_))], 1)   
+        host_pix = wcs.wcs_world2pix([(np.array([host_ra,host_dec], float))], 1)   
 
     # Plot finder chart
 

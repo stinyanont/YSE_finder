@@ -602,7 +602,7 @@ if __name__ == '__main__':
         if not (args.fhalf or args.shalf):
             header=full_nires_header+main_nires_header
             out_file.write(header)
-            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi5'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
             out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
@@ -628,7 +628,7 @@ if __name__ == '__main__':
         if not (args.fhalf or args.shalf):
             header=full_lris_header+main_lris_header
             out_file.write(header)
-            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
+            out_file.write(rtime(times['etwi07'])+','+rtime(times['etwi8'])+','+rtime(times['etwi12'])+','+rtime(times['etwi18'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi8'])+','+rtime(times['mtwi07'])+'\n')
             out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
 
 
