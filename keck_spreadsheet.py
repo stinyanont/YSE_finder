@@ -18,8 +18,20 @@ import math
 # the telescope hits the Nasmyth deck. Note that this is a problem in the South and West for Keck II
 # while for Keck I it is more of a problem in the North and East.
 
+
+
+#DEFINE COMMON CONSTANTS
+lat = 19.8263
+lon = -155.47441
+height= 4145 #4159.581216 # metres
+    
+keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
+keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
+utc_offset = -10*u.hour #Hawaii standard time
+
 def keck1_rising_time(sky_coord, date_UT):
     date_UT = Time(date_UT)
+    # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
@@ -50,6 +62,7 @@ def keck1_rising_time(sky_coord, date_UT):
 
 def keck2_setting_time(sky_coord, date_UT):
     date_UT = Time(date_UT)
+    # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
@@ -92,7 +105,7 @@ def keck_wrap_time(sky_coord, date_UT):
     #
     
     date_UT = Time(date_UT)
-    utc_offset = -10*u.hour #Hawaii standard time
+    # utc_offset = -10*u.hour #Hawaii standard time
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
@@ -165,7 +178,7 @@ def keck_wrap_time(sky_coord, date_UT):
 def moon_distance(sky_coord, date_UT,degrees=15):
     
     date_UT = Time(date_UT)
-    utc_offset = -10*u.hour #Hawaii standard time
+    # utc_offset = -10*u.hour #Hawaii standard time
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
@@ -191,7 +204,7 @@ def moon_distance(sky_coord, date_UT,degrees=15):
 def keck_alt_warning(sky_coord, date_UT):
     
     date_UT = Time(date_UT)
-    utc_offset = -10*u.hour #Hawaii standard time
+    # utc_offset = -10*u.hour #Hawaii standard time
     midnight = date_UT - utc_offset
     # start_time = date_UT - utc_offset - 6*u.hour #6pm
     # end_time =    date_UT - utc_offset + 6*u.hour #6am
@@ -448,9 +461,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    lat = 19.8263
-    lon = -155.47441
-    height= 4145 #4159.581216 # metres
+    # lat = 19.8263
+    # lon = -155.47441
+    # height= 4145 #4159.581216 # metres
     
     cmt='#'
 
@@ -469,9 +482,9 @@ if __name__ == '__main__':
                     cmt_dict[sn_name] = comment
         print(cmt_dict)
     #keck = Observer.at_site("Keck")
-    keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
-    keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
-    utc_offset = -10*u.hour #Hawaii standard time
+    # keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
+    # keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
+    # utc_offset = -10*u.hour #Hawaii standard time
     filename = args.filename
 
     if args.utdate:
