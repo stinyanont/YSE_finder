@@ -29,7 +29,7 @@ keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
 keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
 utc_offset = -10*u.hour #Hawaii standard time
 
-def keck1_rising_time(sky_coord, date_UT):
+def keck1_rising_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -53,14 +53,78 @@ def keck1_rising_time(sky_coord, date_UT):
     else: #object do rise
         # print('foo ', obj_altaz[rising][nasmyth_platform][0])
         if (len(obj_altaz[rising][nasmyth_platform]) > 0) and (obj_altaz[rising][nasmyth_platform][0].az >5.3*u.deg and obj_altaz[rising][nasmyth_platform][0].az < 146.2*u.deg):
-            rise_time = rtime(obj_altaz[rising][nasmyth_platform][0].obstime.datetime)
+            rise_time = obj_altaz[rising][nasmyth_platform][0].obstime.datetime
         elif len(obj_altaz[rising][general_shutter]) > 0:
-            rise_time = rtime(obj_altaz[rising][general_shutter][0].obstime.datetime)
+            rise_time = obj_altaz[rising][general_shutter][0].obstime.datetime
         else:
             rise_time = None
-    return rise_time
+    if return_str & (rise_time is not None):
+        rise_time = rtime(rise_time)
+    else:
+        return rise_time
 
-def keck2_setting_time(sky_coord, date_UT):
+def keck1_setting_time(sky_coord, date_UT, return_str = True):
+    date_UT = Time(date_UT)
+    # utc_offset = -10*u.hour
+    midnight = date_UT - utc_offset
+    # start_time = date_UT - utc_offset - 6*u.hour #6pm
+    # end_time =    date_UT - utc_offset + 6*u.hour #6am
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
+    observer_frame = AltAz(obstime=midnight+delta_midnight,
+                              location=keck_location)
+
+    obj_altaz = sky_coord.transform_to(observer_frame)
+    setting = obj_altaz.az > 180*u.deg #select only times where the object is setting. 
+    #now check for Az when Alt is either 
+
+    general_shutter  = obj_altaz[setting].alt < 18*u.deg
+
+    #object never sets
+    if np.sum(general_shutter) == 0:
+        set_time = None
+    else: #object sets
+        set_time = obj_altaz[setting][general_shutter][0].obstime.datetime
+
+    if return_str & (set_time is not None):
+        set_time = rtime(set_time)
+    else:
+        return set_time  
+
+def keck2_rising_time(sky_coord, date_UT, return_str = True):
+    date_UT = Time(date_UT)
+    # utc_offset = -10*u.hour
+    midnight = date_UT - utc_offset
+    # start_time = date_UT - utc_offset - 6*u.hour #6pm
+    # end_time =    date_UT - utc_offset + 6*u.hour #6am
+    delta_midnight = np.linspace(-7, 7, 720*2)*u.hour #one per 0.5 minute
+    observer_frame = AltAz(obstime=midnight+delta_midnight,
+                              location=keck_location)
+
+    obj_altaz = sky_coord.transform_to(observer_frame)
+    rising = obj_altaz.az < 180*u.deg #select only times where the object is setting. 
+    #now check for Az when Alt is either 
+
+    # nasmyth_platform = obj_altaz[rising].alt > 33.3*u.deg #time steps where object could be below the nasmyth platform, K1
+    general_shutter  = obj_altaz[rising].alt > 18*u.deg
+    # print(np.sum(nasmyth_platform), np.sum(general_shutter))
+    #Object never rises
+    #Need to be more check cases here. 
+    if np.sum(general_shutter) == 0:
+        rise_time = None
+    else: #object do rise
+        # print('foo ', obj_altaz[rising][nasmyth_platform][0])
+        # if (len(obj_altaz[rising][nasmyth_platform]) > 0) and (obj_altaz[rising][nasmyth_platform][0].az >5.3*u.deg and obj_altaz[rising][nasmyth_platform][0].az < 146.2*u.deg):
+        #     rise_time = rtime(obj_altaz[rising][nasmyth_platform][0].obstime.datetime)
+        if len(obj_altaz[rising][general_shutter]) > 0:
+            rise_time = obj_altaz[rising][general_shutter][0].obstime.datetime
+        else:
+            rise_time = None
+    if return_str & (rise_time is not None):
+        rise_time = rtime(rise_time)
+    else:
+        return rise_time
+
+def keck2_setting_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -82,11 +146,13 @@ def keck2_setting_time(sky_coord, date_UT):
         set_time = None
     else: #object sets
         if obj_altaz[setting][nasmyth_platform][0].az >185.3*u.deg and obj_altaz[setting][nasmyth_platform][0].az < 332.8*u.deg:
-            set_time = rtime(obj_altaz[setting][nasmyth_platform][0].obstime.datetime)
+            set_time = obj_altaz[setting][nasmyth_platform][0].obstime.datetime
         else:
-            set_time = rtime(obj_altaz[setting][general_shutter][0].obstime.datetime)
-    return set_time
-    
+            set_time = obj_altaz[setting][general_shutter][0].obstime.datetime
+    if return_str & (set_time is not None):
+        set_time = rtime(set_time)
+    else:
+        return set_time    
 
 def rtime(astroplan_datetime):
     # Rounds astroplan datetime to nearest minute by adding a timedelta minute if second >= 30
