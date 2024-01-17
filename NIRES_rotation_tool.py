@@ -289,14 +289,20 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
 
     #Define guider field for source and offset star
     guider_dx = 3.44*60*1.1 #...shouldn't this number be known? This is the guider offset of around 3.8 arcmin
+    # guider_dx = 3.44*60 #From the documentation
     guider_dim = 1.8*60 #1.8 arcmin. Yep, it's small
     #Rectangle objects representing the guider FoV for the SN and the offset star. 
-    Guider = Rectangle((x[0]+guider_dx-guider_dim/2, y[0]-guider_dim/2), guider_dim,guider_dim, \
+    Guider_rec = Rectangle((x[0]+guider_dx-guider_dim/2, y[0]-guider_dim/2), guider_dim,guider_dim, \
+                    color = 'w', fill = False, lw = 0.3)#, \
+    Guider = Circle((x[0]+guider_dx, y[0]), guider_dim/2, \
                     color = 'w', fill = False, lw = 0.5)#, \
                     #transform = transforms.Affine2D.rotate_around(x = x[0],y =  y[0],theta =  np.radians(PA)))
     if coords_offset is not None:
-        Guider_o = Rectangle((xo[0]+guider_dx-guider_dim/2, yo[0]-guider_dim/2), guider_dim,guider_dim, \
-                    color = 'r', fill = False, lw = 0.5)
+        Guider_o_rec = Rectangle((xo[0]+guider_dx-guider_dim/2, yo[0]-guider_dim/2), guider_dim,guider_dim, \
+                    color = 'r', fill = False, lw = 0.3)
+        Guider_o = Circle((xo[0]+guider_dx, yo[0]), guider_dim/2, \
+                    color = 'r', fill = False, lw = 0.5)#, \
+
 
     #Define guider circle for source and offset star
     Guider_path_in  = Circle((x[0], y[0]), guider_dx-guider_dim/2, fill = False, color = 'w', lw = 0.5,ls = '--')
@@ -317,17 +323,22 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
        rot_o = transforms.Affine2D().rotate_around(xo[0], yo[0],np.radians(PA))+ ax.transData
 
     Guider.set_transform(rot)
+    Guider_rec.set_transform(rot)
     slit.set_transform(rot)
     if coords_offset is not None:
         Guider_o.set_transform(rot_o)
+        Guider_o_rec.set_transform(rot_o)
         slit_o.set_transform(rot_o)
 
     #Add all these overlays to the DSS image
     ax.add_patch(slit)
     ax.add_patch(Guider)
+    ax.add_patch(Guider_rec)
+
     if coords_offset is not None:
         ax.add_patch(slit_o)
         ax.add_patch(Guider_o)
+        ax.add_patch(Guider_o_rec)
 
     ax.add_patch(Guider_path_in )
     ax.add_patch(Guider_path_out)
@@ -372,14 +383,18 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
         rot_o = transforms.Affine2D().rotate_around(xo[0], yo[0],np.radians(PA))+ ax.transData
         #rerotate and draw boxes
         Guider.set_transform(rot)
+        Guider_rec.set_transform(rot)
         slit.set_transform(rot)
         Guider_o.set_transform(rot_o)
+        Guider_o_rec.set_transform(rot_o)
         slit_o.set_transform(rot_o)
 
         ax.add_patch(slit)
         ax.add_patch(Guider)
+        ax.add_patch(Guider_rec)
         ax.add_patch(slit_o)
         ax.add_patch(Guider_o)
+        ax.add_patch(Guider_o_rec)
         ax.set_title('%s, PA = %d deg'%(target_name,PA), fontsize = 16)
 
     #when the PA slider is changed, run update
