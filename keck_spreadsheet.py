@@ -29,7 +29,9 @@ keck_location = EarthLocation(lat=lat*u.deg,lon=lon*u.deg,height=height*u.m)
 keck = Observer(location=keck_location, name="keck", timezone="US/Hawaii")
 utc_offset = -10*u.hour #Hawaii standard time
 
-def keck1_rising_time(sky_coord, date_UT, return_str = True):
+############CHECK WHICH BEHAVIOR WANTED FOR return_str PARAM#############
+
+def keck1_rising_time(sky_coord, date_UT, return_str = False):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -61,9 +63,9 @@ def keck1_rising_time(sky_coord, date_UT, return_str = True):
     if return_str & (rise_time is not None):
         rise_time = rtime(rise_time)
     else:
-        return rise_time
+        return rtime(rise_time)
 
-def keck1_setting_time(sky_coord, date_UT, return_str = True):
+def keck1_setting_time(sky_coord, date_UT, return_str = False):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -88,9 +90,9 @@ def keck1_setting_time(sky_coord, date_UT, return_str = True):
     if return_str & (set_time is not None):
         set_time = rtime(set_time)
     else:
-        return set_time  
+        return rtime(set_time)  
 
-def keck2_rising_time(sky_coord, date_UT, return_str = True):
+def keck2_rising_time(sky_coord, date_UT, return_str = False):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -122,9 +124,9 @@ def keck2_rising_time(sky_coord, date_UT, return_str = True):
     if return_str & (rise_time is not None):
         rise_time = rtime(rise_time)
     else:
-        return rise_time
+        return rtime(rise_time)
 
-def keck2_setting_time(sky_coord, date_UT, return_str = True):
+def keck2_setting_time(sky_coord, date_UT, return_str = False):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -135,24 +137,29 @@ def keck2_setting_time(sky_coord, date_UT, return_str = True):
                               location=keck_location)
 
     obj_altaz = sky_coord.transform_to(observer_frame)
+    # print(obj_altaz.az)
     setting = obj_altaz.az > 180*u.deg #select only times where the object is setting. 
+    # print(obj_altaz.az[setting])
     #now check for Az when Alt is either 
 
     nasmyth_platform = obj_altaz[setting].alt < 36.8*u.deg #time steps where object could be below the nasmyth platform, K2
     general_shutter  = obj_altaz[setting].alt < 18*u.deg
-
+    # print(np.sum(general_shutter) )
     #object never sets
     if np.sum(general_shutter) == 0:
+        #print('bad')
         set_time = None
     else: #object sets
         if obj_altaz[setting][nasmyth_platform][0].az >185.3*u.deg and obj_altaz[setting][nasmyth_platform][0].az < 332.8*u.deg:
             set_time = obj_altaz[setting][nasmyth_platform][0].obstime.datetime
         else:
             set_time = obj_altaz[setting][general_shutter][0].obstime.datetime
+        #print("Object sets ", set_time)
+        #print(rtime(set_time))
     if return_str & (set_time is not None):
         set_time = rtime(set_time)
     else:
-        return set_time    
+        return rtime(set_time)    
 
 def rtime(astroplan_datetime):
     # Rounds astroplan datetime to nearest minute by adding a timedelta minute if second >= 30
@@ -743,8 +750,8 @@ if __name__ == '__main__':
                     #print(k2_set.datetime))
                     
                     if args.instrument=='NIRES':
-                        k2_set=keck2_setting_time(source_coords, times['utdate'])
-                        #print("K2 setting time is ",k2_set)
+                        k2_set=keck2_setting_time(source_coords, times['utdate'], return_str=False)
+                        print("K2 setting time is ",k2_set)
                         if k2_set==None:
                             k2_set='-'
                         #print(rtime(k2_set))
