@@ -31,7 +31,7 @@ utc_offset = -10*u.hour #Hawaii standard time
 
 ############CHECK WHICH BEHAVIOR WANTED FOR return_str PARAM#############
 
-def keck1_rising_time(sky_coord, date_UT, return_str = False):
+def keck1_rising_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -62,10 +62,11 @@ def keck1_rising_time(sky_coord, date_UT, return_str = False):
             rise_time = None
     if return_str & (rise_time is not None):
         rise_time = rtime(rise_time)
+        return rise_time
     else:
-        return rtime(rise_time)
+        return rise_time
 
-def keck1_setting_time(sky_coord, date_UT, return_str = False):
+def keck1_setting_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -89,10 +90,11 @@ def keck1_setting_time(sky_coord, date_UT, return_str = False):
 
     if return_str & (set_time is not None):
         set_time = rtime(set_time)
+        return set_time
     else:
-        return rtime(set_time)  
+        return set_time
 
-def keck2_rising_time(sky_coord, date_UT, return_str = False):
+def keck2_rising_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -123,10 +125,11 @@ def keck2_rising_time(sky_coord, date_UT, return_str = False):
             rise_time = None
     if return_str & (rise_time is not None):
         rise_time = rtime(rise_time)
+        return rise_time
     else:
-        return rtime(rise_time)
+        return rise_time
 
-def keck2_setting_time(sky_coord, date_UT, return_str = False):
+def keck2_setting_time(sky_coord, date_UT, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -158,8 +161,9 @@ def keck2_setting_time(sky_coord, date_UT, return_str = False):
         #print(rtime(set_time))
     if return_str & (set_time is not None):
         set_time = rtime(set_time)
+        return set_time
     else:
-        return rtime(set_time)    
+        return set_time   
 
 def rtime(astroplan_datetime):
     # Rounds astroplan datetime to nearest minute by adding a timedelta minute if second >= 30
@@ -224,6 +228,7 @@ def keck_wrap_time(sky_coord, date_UT):
     if len(obj_altaz[nswrap])==0:
      #print('Not in North/South Wrap')
      ns_start,ns_end=None,None
+    print(s_start,s_end,ns_start,ns_end)
     
     if s_start==None and s_end==None and ns_start==None and ns_end==None:
      string='N (%s-%s)'%(n_start,n_end)
@@ -750,7 +755,7 @@ if __name__ == '__main__':
                     #print(k2_set.datetime))
                     
                     if args.instrument=='NIRES':
-                        k2_set=keck2_setting_time(source_coords, times['utdate'], return_str=False)
+                        k2_set=keck2_setting_time(source_coords, times['utdate'], return_str=True)
                         print("K2 setting time is ",k2_set)
                         if k2_set==None:
                             k2_set='-'
