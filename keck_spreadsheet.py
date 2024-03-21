@@ -94,7 +94,7 @@ def keck1_setting_time(sky_coord, date_UT, return_str = True):
     else:
         return set_time
 
-def keck2_rising_time(sky_coord, date_UT, return_str = True):
+def keck2_rising_time(sky_coord, date_UT, limited_shutter = None, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -109,7 +109,10 @@ def keck2_rising_time(sky_coord, date_UT, return_str = True):
     #now check for Az when Alt is either 
 
     # nasmyth_platform = obj_altaz[rising].alt > 33.3*u.deg #time steps where object could be below the nasmyth platform, K1
-    general_shutter  = obj_altaz[rising].alt > 18*u.deg
+    if limited_shutter is not None:
+        general_shutter  = obj_altaz[rising].alt > limited_shutter*u.deg
+    else:
+        general_shutter  = obj_altaz[rising].alt > 18*u.deg
     # print(np.sum(nasmyth_platform), np.sum(general_shutter))
     #Object never rises
     #Need to be more check cases here. 
@@ -129,7 +132,7 @@ def keck2_rising_time(sky_coord, date_UT, return_str = True):
     else:
         return rise_time
 
-def keck2_setting_time(sky_coord, date_UT, return_str = True):
+def keck2_setting_time(sky_coord, date_UT, limited_shutter = None, return_str = True):
     date_UT = Time(date_UT)
     # utc_offset = -10*u.hour
     midnight = date_UT - utc_offset
@@ -145,8 +148,13 @@ def keck2_setting_time(sky_coord, date_UT, return_str = True):
     # print(obj_altaz.az[setting])
     #now check for Az when Alt is either 
 
-    nasmyth_platform = obj_altaz[setting].alt < 36.8*u.deg #time steps where object could be below the nasmyth platform, K2
-    general_shutter  = obj_altaz[setting].alt < 18*u.deg
+    if limited_shutter is not None:
+        nasmyth_platform = obj_altaz[setting].alt < np.max([36.8,limited_shutter])*u.deg #time steps where object could be below the nasmyth platform, K2
+        general_shutter  = obj_altaz[setting].alt < limited_shutter*u.deg
+
+    else:
+        nasmyth_platform = obj_altaz[setting].alt < 36.8*u.deg #time steps where object could be below the nasmyth platform, K2
+        general_shutter  = obj_altaz[setting].alt < 18*u.deg
     # print(np.sum(general_shutter) )
     #object never sets
     if np.sum(general_shutter) == 0:
@@ -228,7 +236,7 @@ def keck_wrap_time(sky_coord, date_UT):
     if len(obj_altaz[nswrap])==0:
      #print('Not in North/South Wrap')
      ns_start,ns_end=None,None
-    print(s_start,s_end,ns_start,ns_end)
+    # print(s_start,s_end,ns_start,ns_end)
     
     if s_start==None and s_end==None and ns_start==None and ns_end==None:
      string='N (%s-%s)'%(n_start,n_end)
@@ -535,6 +543,7 @@ if __name__ == '__main__':
     parser.add_argument('--utdate', dest='utdate',type = Time,help = 'fmt: yyyy-mm-dd. Date of observations. Superseeds taking the time from the filename.')
     parser.add_argument("--fhalf", action="store_true",help="first half night")
     parser.add_argument("--shalf", action="store_true",help="second half night")
+    parser.add_argument("--limited_shutter",help="altitude in degrees if shutter is limited above normal elevation")
     parser.add_argument("--comments", "-c", help="Original YSE PZ target list with comments", default=None)
 
     args = parser.parse_args()
@@ -544,6 +553,10 @@ if __name__ == '__main__':
     # height= 4145 #4159.581216 # metres
     
     cmt='#'
+
+    if args.instrument not in ["LRIS", "NIRES"]:
+        print("Instrument must be LRIS or NIRES. Default to NIRES")
+        args.instrument = 'NIRES'
 
     #If comments are given, open that file and store comments and SN name
     cmt_dict = {}
@@ -579,6 +592,9 @@ if __name__ == '__main__':
             date = filename.split(".")[0].split("Keck_I_")[1].split("_")[0]
             utdate = Time(date)+TimeDelta(1)
         print("Using UT date from the filename: ",utdate)
+
+    if args.limited_shutter:
+        limited_shutter = float(args.limited_shutter)
 
 
     # USNO, defintion of sunset time is when the solar disk center is at -0.8333 degrees altitude
@@ -680,6 +696,8 @@ if __name__ == '__main__':
 
         if args.shalf:
             header=shalf_nires_header+main_nires_header
+            # print(header)
+            # print('******************')
             out_file.write(header)
             out_file.write(rtime(times['midnight'])+'\t'+rtime(times['mtwi18'])+','+rtime(times['mtwi12'])+','+rtime(times['mtwi5'])+','+rtime(times['mtwi07'])+'\n')
             out_file.write('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
@@ -727,9 +745,10 @@ if __name__ == '__main__':
 
         if len(i.strip()) > 1:
             if i.strip()[0] != cmt : #The entire line is not commented
+                print(i)
                 if "_S" not in i.split()[0]: #this is a target, not an offset star
                     split=i.split()
-                    #print(len(split))                    
+                    print(len(split))                    
                     name=split[0]
                     ra = split[1]+' '+split[2]+' '+split[3]
                     dec= split[4]+' '+split[5]+' '+split[6]
@@ -755,7 +774,7 @@ if __name__ == '__main__':
                     #print(k2_set.datetime))
                     
                     if args.instrument=='NIRES':
-                        k2_set=keck2_setting_time(source_coords, times['utdate'], return_str=True)
+                        k2_set=keck2_setting_time(source_coords, times['utdate'], limited_shutter= limited_shutter, return_str=True)
                         print("K2 setting time is ",k2_set)
                         if k2_set==None:
                             k2_set='-'

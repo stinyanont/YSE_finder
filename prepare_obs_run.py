@@ -157,7 +157,7 @@ if __name__ == '__main__':
                 min_mag = 5
                 max_mag = 18  
                 pa_offset = 0
-                num_offset_stars = 3 #For NIRES, only do one
+                num_offset_stars = 3 #For NIRES
             else:
                 print("Telescope should be either Keck or Lick; default to Lick.")  
                 finder_size = 6/60 #4 arcmin, Kast
