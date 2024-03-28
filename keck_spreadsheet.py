@@ -595,6 +595,8 @@ if __name__ == '__main__':
 
     if args.limited_shutter:
         limited_shutter = float(args.limited_shutter)
+    else:
+        limited_shutter = None
 
 
     # USNO, defintion of sunset time is when the solar disk center is at -0.8333 degrees altitude
