@@ -54,6 +54,9 @@ if __name__ == '__main__':
     parser.add_argument("--ysepz", action='store_true',
                     help="Open YSE PZ page for all transients in the file.")
 
+    parser.add_argument("--sort_ra", action='store_true',
+                    help="Sort the target list by RA")
+
     args = parser.parse_args()
     # print(args.dss)
     #Check if correct number of arguments are given
@@ -69,7 +72,8 @@ if __name__ == '__main__':
 
     #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False, converters = converters)
     #targets = asci.read(filename, comment = 'c',format='no_header',data_start= 1,guess=False)
-    targets = pd.read_csv(filename, delimiter= '\s+',header=None,usecols=range(0,11),skiprows=1,converters=converters)
+    targets = pd.read_csv(filename, delimiter= '\s+',header=None,usecols=range(0,11),\
+        skiprows=1,converters=converters,comment='#')
     targets=targets.drop_duplicates()
 
     names = np.array(targets[0])
@@ -90,6 +94,10 @@ if __name__ == '__main__':
     Dec = np.array([str(x[4]) + ':' +str(x[5]) +':' + str(x[6]) for i,x in targets.iterrows()])
 
     coords = coordinates.SkyCoord(RA, Dec, unit = (u.hourangle, u.deg))
+
+    if args.sort_ra:
+        targets.insert(targets.insert(len(targets.columns),'ra_deg',coords.ra.value, True))
+        targets.sort_value('ra_deg', inplace = True)
 
     mags = np.array(targets[10])
 
