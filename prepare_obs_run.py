@@ -96,8 +96,8 @@ if __name__ == '__main__':
     coords = coordinates.SkyCoord(RA, Dec, unit = (u.hourangle, u.deg))
 
     if args.sort_ra:
-        targets.insert(targets.insert(len(targets.columns),'ra_deg',coords.ra.value, True))
-        targets.sort_value('ra_deg', inplace = True)
+        targets.insert(len(targets.columns),'ra_deg',coords.ra.value, True)
+        targets.sort_values('ra_deg', inplace = True)
 
     mags = np.array(targets[10])
 
