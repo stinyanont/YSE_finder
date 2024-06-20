@@ -42,6 +42,7 @@ from urllib.request import urlretrieve
 
 import http.client as httplib 
 
+dec_limit = -30
 
 def deg2hour(ra, dec, sep=":"):
     '''
@@ -384,7 +385,7 @@ def get_fits_image(ra, dec, rad, server = 'ps1', debug=False):
     '''
     # print(server)
     #If dec> -30, we have Pan-STARRS
-    if dec > -35 and server == 'ps1':
+    if dec > dec_limit and server == 'ps1':
         # Construct URL to download Pan-STARRS image cutout, and save to tmp.fits
     
         # First find the index of images and retrieve the file of the image that we want to use.
@@ -587,16 +588,16 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     output_format : text
         pdf or png. Only png is supported for rotation right now
     '''
-        
     try:
         ra=float(ra)
         dec=float(dec)
     except:
         ra, dec = hour2deg(ra, dec) 
 
-    if dec < -35 or use_skymapper:
+    if dec < dec_limit or use_skymapper:
         print("using SkyMapper")
         catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag)
+        server = 'dss'
     else:
         try:
             catalog = query_ps1_new_mast(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag, debug = debug)
@@ -609,7 +610,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
     ###Check if need fainter stars
     if (len(catalog)<3):
         if debug: print ("Looking for a bit fainter stars up to mag: %.2f"%(maxmag+0.5))
-        if dec < -35 or use_skymapper:
+        if dec < dec_limit or use_skymapper:
             catalog = query_sky_mapper_catalogue(ra, dec, (rad/2.)*0.95, minmag=minmag, maxmag=maxmag+0.5)
         else:
             try:
@@ -765,7 +766,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
             elif server == 'dss':
                 circ_size = 10
             else:
-                circ_size = 35
+                circ_size = 10
             circ = plt.Circle((ref_pix[i][0,0], ref_pix[i][0,1]), circ_size, color=cols[i], fill=False, lw = 3)
             ax = plt.gca()
             ax.add_artist(circ)

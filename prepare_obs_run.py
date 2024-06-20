@@ -16,7 +16,7 @@ import time
 import pandas as pd
 from PIL import Image
 
-
+import pdb
 from finder_chart import get_finder, get_host_PA_and_sep
 
 
@@ -76,8 +76,8 @@ if __name__ == '__main__':
         skiprows=1,converters=converters,comment='#')
     targets=targets.drop_duplicates()
 
+    #Crucially, open ysepz before sorting so the order is the same as in the original file. 
     names = np.array(targets[0])
-
     if args.ysepz:
         for i in names:
             try:
@@ -90,21 +90,30 @@ if __name__ == '__main__':
             except:
                 print("I tried, and I failed. The link is https://ziggy.ucolick.org/yse/transient_detail/%s/"%i)
 
+    #DEALING WITH SORTING
+    if args.sort_ra:
+
+        RA = np.array([str(x[1]) + ':' +str(x[2]) +':' + str(x[3]) for i,x in targets.iterrows()])
+        Dec = np.array([str(x[4]) + ':' +str(x[5]) +':' + str(x[6]) for i,x in targets.iterrows()])
+
+        coords = coordinates.SkyCoord(RA, Dec, unit = (u.hourangle, u.deg))
+
+        targets.insert(len(targets.columns),'radeg',coords.ra.value, True)
+        targets.sort_values('radeg', inplace = True)
+
+    names = np.array(targets[0])
+
     RA = np.array([str(x[1]) + ':' +str(x[2]) +':' + str(x[3]) for i,x in targets.iterrows()])
     Dec = np.array([str(x[4]) + ':' +str(x[5]) +':' + str(x[6]) for i,x in targets.iterrows()])
-
+       
     coords = coordinates.SkyCoord(RA, Dec, unit = (u.hourangle, u.deg))
-
-    if args.sort_ra:
-        targets.insert(len(targets.columns),'ra_deg',coords.ra.value, True)
-        targets.sort_values('ra_deg', inplace = True)
 
     mags = np.array(targets[10])
 
     all_starlist = ''
 
     skip_host = False
-
+    # pdb.set_trace()
     ###Start a file to write to. 
     if args.telescope == 'NIRES':
         out_file = open(filename.split('.')[0]+'_with_offsets.txt', "w")
@@ -118,7 +127,7 @@ if __name__ == '__main__':
             name = names[i]
             ra_deg = coords[i].ra.deg
             dec_deg = coords[i].dec.deg
-            mag = mags[i]
+            mag = float(mags[i])
             print("Preparing a finder chart for %s."%name)
             #Check if host is provided. This should be in the next line, with same name
             # Example
@@ -163,7 +172,7 @@ if __name__ == '__main__':
                 finder_size = 4/60 #4 arcmin, NIRES
                 max_separation = 1.8*60 #1.8 arcmin, NIRES, not guidable otherwise
                 min_mag = 5
-                max_mag = 18  
+                max_mag = 21  
                 pa_offset = 0
                 num_offset_stars = 3 #For NIRES
             else:

@@ -269,7 +269,7 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
     #Get the wcs object from the image
     wcs = WCS(img[0][0].header)
     #Define the plot
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (8,8))
     ax = plt.subplot(projection = wcs)
     ax.imshow(img[0][0].data, origin = 'lower')
 
