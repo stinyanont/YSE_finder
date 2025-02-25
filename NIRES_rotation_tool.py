@@ -201,10 +201,14 @@ class VertSlider(AxesWidget):
         self.set_val(val)
 
     def set_val(self, val):
-        xy = self.poly.xy
-        xy[1] = 0, val
-        xy[2] = 1, val
-        self.poly.xy = xy
+        # xy = self.poly.xy
+        print(self.poly)
+        # xy[1] = 0, val
+        # xy[2] = 1, val
+        # self.poly.xy = xy
+        # self.poly.xy = (1, val)
+        #mpl 3.10 changes this
+        self.poly.set_height(val)
         self.valtext.set_text(self.valfmt % val)
         if self.drawon:
             self.ax.figure.canvas.draw_idle()
