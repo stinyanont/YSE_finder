@@ -668,6 +668,7 @@ def get_finder(ra, dec, name, rad, debug=False, starlist=None, print_starlist=Tr
         catalog.sort(order='mag')
 
     if (debug): print (catalog)
+    if (debug): print (server)
 
     ###########Get FITS image of the FoV from PS1 or DSS
     image_file = get_fits_image(ra, dec, rad, server = server, debug=debug)    
