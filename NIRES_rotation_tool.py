@@ -4,7 +4,7 @@ from astropy.coordinates import SkyCoord
 from astroquery.skyview import SkyView
 import astropy.units as u
 from astropy.wcs import WCS
-from astropy.io import ascii as asci
+from astropy.io import ascii as asci, fits
 
 from matplotlib.patches import Rectangle, Circle
 from matplotlib import transforms
@@ -13,6 +13,9 @@ from matplotlib.widgets import Slider, Button
 import sys, glob, argparse
 
 from PIL import Image
+
+from urllib import request
+import xmltodict
 
 #############Define the matplotlib slider tool
 #Vertical Slider bar from https://stackoverflow.com/questions/25934279/add-a-vertical-slider-with-matplotlib
@@ -202,7 +205,7 @@ class VertSlider(AxesWidget):
 
     def set_val(self, val):
         # xy = self.poly.xy
-        print(self.poly)
+        # print(self.poly)
         # xy[1] = 0, val
         # xy[2] = 1, val
         # self.poly.xy = xy
@@ -244,16 +247,54 @@ class VertSlider(AxesWidget):
             self.set_val(self.valinit)
 
 ###########Function to download DSS image
+# def download_DSS(coord, size = 800, image_server = 'DSS2 Red'):
+#     """
+#     Given a SkyCoord object, download a DSS image from the given size using
+#     a given server. The default is DSS2 Red to have all-sky coverage in the 
+#     band closest to the guider. 
+#     """
+#     img = SkyView.get_images(position=coord,survey=[image_server]\
+#                          ,pixels='%s,%s'%(str(size), str(size)),
+#                          coordinates='J2000',grid=True,gridlabels=True)
+#     return img
+
 def download_DSS(coord, size = 800, image_server = 'DSS2 Red'):
     """
     Given a SkyCoord object, download a DSS image from the given size using
     a given server. The default is DSS2 Red to have all-sky coverage in the 
     band closest to the guider. 
+
+    Rewrite using IRSA API instead of SkyView
     """
-    img = SkyView.get_images(position=coord,survey=[image_server]\
-                         ,pixels='%s,%s'%(str(size), str(size)),
-                         coordinates='J2000',grid=True,gridlabels=True)
-    return img
+
+    if image_server not in ['DSS2 Red', 'DSS2 Blue', 'DSS2 IR']:
+        print('Image server must be "DSS2 Red", "DSS2 Blue", or "DSS2 IR". Default to Red')
+        image_server = 'DSS2 Red'
+
+    base = "https://irsa.ipac.caltech.edu/applications/finderchart/servlet/api?"
+
+    locstr = str(coord.ra.value)+'+'+str(coord.dec.value)
+    subsetsize = size/60 #1" per pix
+    survey = 'DSS'
+
+    search_url = base + 'locstr=%s&subsetsize=%s&reproject=true&survey=%s'%(locstr, subsetsize,survey)
+    # locstr=146.22351+22.88512&subsetsize=1.0&reproject=true
+    print(search_url)
+    res = request.urlopen(search_url)
+    txt = res.read()
+    res.close()
+    xml = xmltodict.parse(txt)
+
+    for i in xml['finderchart']['result']['image']:
+        if i['band'] == image_server:
+            fitsurl = i['fitsurl']
+
+    request.urlretrieve(fitsurl, '/tmp/tmp.fits')
+
+    return fits.open('/tmp/tmp.fits')
+
+    # img = 
+    # return img
 
 ###########Main function to bring up the plot, given the coordinates
 def plot_NIRES_fov(coords, coords_offset, target_name):
@@ -271,12 +312,13 @@ def plot_NIRES_fov(coords, coords_offset, target_name):
     #Download the DSS image
     img = download_DSS(coords)
     #Get the wcs object from the image
-    wcs = WCS(img[0][0].header)
+    # wcs = WCS(img[0][0].header) #New download_DSS from IRSA has a different format
+    wcs = WCS(img[0].header)
     #Define the plot
     plt.figure(figsize = (8,8))
     ax = plt.subplot(projection = wcs)
-    ax.imshow(img[0][0].data, origin = 'lower')
-
+    #ax.imshow(img[0][0].data, origin = 'lower') #New download_DSS from IRSA has a different format
+    ax.imshow(img[0].data, origin = 'lower')
     #picture coordinates of source and offset star
     x, y = wcs.all_world2pix([coords.ra.deg], [coords.dec.deg], 1)
     if coords_offset is not None:
