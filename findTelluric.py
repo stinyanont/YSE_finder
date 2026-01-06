@@ -4,7 +4,7 @@ from astroquery.vizier import Vizier
 from astroquery.simbad import Simbad
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-import sys
+import sys, pdb
 
 def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 6.5, Vmax = 11):
     """
@@ -26,21 +26,22 @@ def getTelluric(coords, max_distance = 20, spec_type = 'A0V', Vmin = 6.5, Vmax =
         a0v_res = result[0]
 
     #Get B mag from Simbad, also check spectral type
-    Simbad.add_votable_fields("flux(B)")
-    Simbad.add_votable_fields("flux(V)")
-    Simbad.add_votable_fields("sptype")
+    Simbad.add_votable_fields("B")
+    Simbad.add_votable_fields("V")
+    Simbad.add_votable_fields("sp_type")
 
     add_mag = Simbad.query_objects(["HIP"+str(x) for x in a0v_res['HIP']])
 
     res_coords = SkyCoord(ra = a0v_res['RAhms'], dec = a0v_res['DEdms'], unit = (u.hourangle, u.deg))
+    # pdb.set_trace()
     a0v_res['distance'] = coords.separation(res_coords)
     a0v_res['dRA'] = (coords.ra.deg - res_coords.ra.deg)
     a0v_res['abs_dRA'] = np.abs(coords.ra.deg - res_coords.ra.deg)
-    a0v_res['Simbad_spt'] = add_mag['SP_TYPE']
-    a0v_res['Simbad_B'] = add_mag['FLUX_B']
-    a0v_res['Simbad_V'] = add_mag['FLUX_V']
+    a0v_res['Simbad_spt'] = add_mag['sp_type']
+    a0v_res['Simbad_B'] = add_mag['B']
+    a0v_res['Simbad_V'] = add_mag['V']
 
-    actually_A0V = add_mag['SP_TYPE'] == 'A0V'
+    actually_A0V = add_mag['sp_type'] == 'A0V'
 
     #print(a0v_res)
 

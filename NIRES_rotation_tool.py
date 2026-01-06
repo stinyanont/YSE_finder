@@ -10,7 +10,7 @@ from matplotlib.patches import Rectangle, Circle
 from matplotlib import transforms
 from matplotlib.widgets import Slider, Button
 
-import sys, glob, argparse
+import sys, glob, argparse, pdb
 
 from PIL import Image
 
@@ -247,54 +247,58 @@ class VertSlider(AxesWidget):
             self.set_val(self.valinit)
 
 ###########Function to download DSS image
-# def download_DSS(coord, size = 800, image_server = 'DSS2 Red'):
-#     """
-#     Given a SkyCoord object, download a DSS image from the given size using
-#     a given server. The default is DSS2 Red to have all-sky coverage in the 
-#     band closest to the guider. 
-#     """
-#     img = SkyView.get_images(position=coord,survey=[image_server]\
-#                          ,pixels='%s,%s'%(str(size), str(size)),
-#                          coordinates='J2000',grid=True,gridlabels=True)
-#     return img
-
 def download_DSS(coord, size = 800, image_server = 'DSS2 Red'):
     """
     Given a SkyCoord object, download a DSS image from the given size using
     a given server. The default is DSS2 Red to have all-sky coverage in the 
     band closest to the guider. 
-
-    Rewrite using IRSA API instead of SkyView
     """
+    # img = SkyView.get_images(position=coord,survey=[image_server]\
+    #                      ,pixels='%s,%s'%(str(size), str(size)),
+    #                      coordinates='J2000',grid=True,gridlabels=True)
+    img = SkyView.get_images(position=coord,survey=[image_server]\
+                         ,pixels='%s,%s'%(str(size), str(size)),
+                         coordinates='J2000')
+    # pdb.set_trace()
+    return img[0]
 
-    if image_server not in ['DSS2 Red', 'DSS2 Blue', 'DSS2 IR']:
-        print('Image server must be "DSS2 Red", "DSS2 Blue", or "DSS2 IR". Default to Red')
-        image_server = 'DSS2 Red'
+# def download_DSS(coord, size = 800, image_server = 'DSS2 Red'):
+#     """
+#     Given a SkyCoord object, download a DSS image from the given size using
+#     a given server. The default is DSS2 Red to have all-sky coverage in the 
+#     band closest to the guider. 
 
-    base = "https://irsa.ipac.caltech.edu/applications/finderchart/servlet/api?"
+#     Rewrite using IRSA API instead of SkyView
+#     """
 
-    locstr = str(coord.ra.value)+'+'+str(coord.dec.value)
-    subsetsize = size/60 #1" per pix
-    survey = 'DSS'
+#     if image_server not in ['DSS2 Red', 'DSS2 Blue', 'DSS2 IR']:
+#         print('Image server must be "DSS2 Red", "DSS2 Blue", or "DSS2 IR". Default to Red')
+#         image_server = 'DSS2 Red'
 
-    search_url = base + 'locstr=%s&subsetsize=%s&reproject=true&survey=%s'%(locstr, subsetsize,survey)
-    # locstr=146.22351+22.88512&subsetsize=1.0&reproject=true
-    print(search_url)
-    res = request.urlopen(search_url)
-    txt = res.read()
-    res.close()
-    xml = xmltodict.parse(txt)
+#     base = "https://irsa.ipac.caltech.edu/applications/finderchart/servlet/api?"
 
-    for i in xml['finderchart']['result']['image']:
-        if i['band'] == image_server:
-            fitsurl = i['fitsurl']
+#     locstr = str(coord.ra.value)+'+'+str(coord.dec.value)
+#     subsetsize = size/60 #1" per pix
+#     survey = 'DSS'
 
-    request.urlretrieve(fitsurl, '/tmp/tmp.fits')
+#     search_url = base + 'locstr=%s&subsetsize=%s&reproject=true&survey=%s'%(locstr, subsetsize,survey)
+#     # locstr=146.22351+22.88512&subsetsize=1.0&reproject=true
+#     print(search_url)
+#     res = request.urlopen(search_url)
+#     txt = res.read()
+#     res.close()
+#     xml = xmltodict.parse(txt)
 
-    return fits.open('/tmp/tmp.fits')
+#     for i in xml['finderchart']['result']['image']:
+#         if i['band'] == image_server:
+#             fitsurl = i['fitsurl']
 
-    # img = 
-    # return img
+#     request.urlretrieve(fitsurl, '/tmp/tmp.fits')
+
+#     return fits.open('/tmp/tmp.fits')
+
+#     # img = 
+#     # return img
 
 ###########Main function to bring up the plot, given the coordinates
 def plot_NIRES_fov(coords, coords_offset, target_name):
